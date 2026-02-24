@@ -1,0 +1,32 @@
+{
+  "name": "dindin",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "clean": "turbo clean",
+    "dev:web": "turbo dev --filter=@dindin/web",
+    "dev:extension": "turbo dev --filter=@dindin/extension",
+    "build:web": "turbo build --filter=@dindin/web",
+    "build:extension": "turbo build --filter=@dindin/extension",
+    "db:migrate": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:seed": "supabase db seed"
+  },
+  "devDependencies": {
+    "turbo": "^2"
+  },
+  "packageManager": "pnpm@10.26.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver",
+      "sharp"
+    ]
+  }
+}

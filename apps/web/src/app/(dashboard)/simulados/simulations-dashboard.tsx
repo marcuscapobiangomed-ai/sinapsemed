@@ -1,0 +1,274 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  ClipboardList,
+  Plus,
+  Lock,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Hash,
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { SimulationCard } from "./simulation-card";
+import { AccuracyTrendChart } from "./accuracy-trend-chart";
+import { SpecialtyBreakdownChart } from "./specialty-breakdown-chart";
+import { AddSimulationDialog } from "./add-simulation-dialog";
+import type {
+  Simulation,
+  SimulationStats,
+  AccuracyTrendPoint,
+  SpecialtyAccuracy,
+} from "@/lib/simulation-queries";
+
+interface Banca {
+  id: string;
+  name: string;
+}
+
+interface Specialty {
+  id: string;
+  name: string;
+}
+
+interface SimulationsDashboardProps {
+  simulations: Simulation[];
+  stats: SimulationStats;
+  accuracyTrend: AccuracyTrendPoint[];
+  specialtyAccuracy: SpecialtyAccuracy[];
+  bancas: Banca[];
+  specialties: Specialty[];
+  limitReached?: boolean;
+  limitInfo?: string;
+}
+
+export function SimulationsDashboard({
+  simulations: initialSimulations,
+  stats,
+  accuracyTrend,
+  specialtyAccuracy,
+  bancas,
+  specialties,
+  limitReached,
+  limitInfo,
+}: SimulationsDashboardProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [simulations, setSimulations] = useState(initialSimulations);
+  const [, startTransition] = useTransition();
+  const router = useRouter();
+
+  async function handleAdd(data: {
+    title: string;
+    banca_id: string | null;
+    source: string;
+    exam_date: string;
+    total_questions: number;
+    correct_answers: number;
+    duration_minutes: number | null;
+    notes: string;
+    specialty_results: { specialty_id: string; questions: number; correct: number }[];
+  }) {
+    const supabase = createClient();
+
+    const { data: sim, error } = await supabase
+      .from("simulations")
+      .insert({
+        title: data.title,
+        banca_id: data.banca_id,
+        source: data.source || null,
+        exam_date: data.exam_date,
+        total_questions: data.total_questions,
+        correct_answers: data.correct_answers,
+        duration_minutes: data.duration_minutes,
+        notes: data.notes || null,
+      })
+      .select("id")
+      .single();
+
+    if (error || !sim) return;
+
+    // Insert specialty results if any
+    if (data.specialty_results.length > 0) {
+      await supabase.from("simulation_results").insert(
+        data.specialty_results.map((r) => ({
+          simulation_id: sim.id,
+          specialty_id: r.specialty_id,
+          questions: r.questions,
+          correct: r.correct,
+        })),
+      );
+    }
+
+    // Refresh data
+    startTransition(() => {
+      router.refresh();
+    });
+
+    // Optimistic: add to local list
+    const accuracy = data.total_questions > 0
+      ? Math.round((data.correct_answers / data.total_questions) * 100)
+      : 0;
+
+    setSimulations((prev) => [
+      {
+        id: sim.id,
+        title: data.title,
+        banca_name: bancas.find((b) => b.id === data.banca_id)?.name ?? null,
+        source: data.source || null,
+        exam_date: data.exam_date,
+        total_questions: data.total_questions,
+        correct_answers: data.correct_answers,
+        accuracy,
+        duration_minutes: data.duration_minutes,
+        notes: data.notes || null,
+      },
+      ...prev,
+    ]);
+  }
+
+  async function handleDelete(id: string) {
+    const supabase = createClient();
+    await supabase.from("simulations").delete().eq("id", id);
+
+    setSimulations((prev) => prev.filter((s) => s.id !== id));
+
+    startTransition(() => {
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Simulados</h1>
+          <p className="text-muted-foreground text-sm">
+            Acompanhe sua evolução nos simulados de residência
+          </p>
+          {limitInfo && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Simulados registrados: {limitInfo}
+            </p>
+          )}
+        </div>
+        <Button
+          onClick={() => setDialogOpen(true)}
+          className="gap-1.5"
+          disabled={limitReached}
+        >
+          {limitReached ? (
+            <Lock className="h-4 w-4" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+          {limitReached ? "Limite atingido" : "Registrar"}
+        </Button>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total de Simulados
+            </CardTitle>
+            <Hash className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{stats.total_count}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Média de Acerto
+            </CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{stats.avg_accuracy}%</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Tendência
+            </CardTitle>
+            {stats.trend >= 0 ? (
+              <TrendingUp className="h-4 w-4 text-green-500" />
+            ) : (
+              <TrendingDown className="h-4 w-4 text-red-500" />
+            )}
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">
+              {stats.trend > 0 ? "+" : ""}
+              {stats.trend}%
+            </p>
+            <p className="text-xs text-muted-foreground">últimos 3 vs anteriores</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Fonte Principal
+            </CardTitle>
+            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold truncate">
+              {stats.top_source ?? "—"}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <AccuracyTrendChart data={accuracyTrend} />
+        <SpecialtyBreakdownChart data={specialtyAccuracy} />
+      </div>
+
+      {/* Simulation list */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold">Histórico</h2>
+        {simulations.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <ClipboardList className="h-10 w-10 text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">Nenhum simulado registrado</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Clique em &ldquo;Registrar&rdquo; para adicionar seu primeiro simulado
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          simulations.map((sim) => (
+            <SimulationCard
+              key={sim.id}
+              simulation={sim}
+              onDelete={handleDelete}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Dialog */}
+      <AddSimulationDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        bancas={bancas}
+        specialties={specialties}
+        onAdd={handleAdd}
+      />
+    </div>
+  );
+}

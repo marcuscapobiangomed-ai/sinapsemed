@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  min-width: 360px;
+  min-height: 480px;
+}
+
+/* ── Chat Markdown Prose ── */
+.prose-chat {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #1f2937;
+}
+
+.prose-chat p {
+  margin: 0 0 8px;
+}
+
+.prose-chat p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-chat strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+.prose-chat ul,
+.prose-chat ol {
+  margin: 4px 0 8px;
+  padding-left: 18px;
+}
+
+.prose-chat ul {
+  list-style-type: disc;
+}
+
+.prose-chat ol {
+  list-style-type: decimal;
+}
+
+.prose-chat li {
+  margin-bottom: 3px;
+}
+
+.prose-chat li::marker {
+  color: #9ca3af;
+}
+
+.prose-chat blockquote {
+  margin: 10px 0 6px;
+  padding: 8px 12px;
+  border-left: 3px solid #6366f1;
+  background: #eef2ff;
+  border-radius: 0 8px 8px 0;
+  font-size: 12px;
+}
+
+.prose-chat blockquote p {
+  margin: 0;
+}
+
+.prose-chat code {
+  font-size: 11px;
+  background: #f3f4f6;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.prose-chat h3,
+.prose-chat h4 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 10px 0 4px;
+  color: #111827;
+}
+
+.prose-chat hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 8px 0;
+}

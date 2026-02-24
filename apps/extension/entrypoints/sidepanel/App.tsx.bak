@@ -1,0 +1,186 @@
+import { useState, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
+import { LoginForm } from "@/components/LoginForm";
+import { getSelectedText, clearSelectedText } from "@/lib/storage";
+
+interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  context?: string;
+}
+
+export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [question, setQuestion] = useState("");
+  const [context, setContext] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    async function init() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+
+      // Load selected text as context
+      const selected = await getSelectedText();
+      if (selected) {
+        setContext(selected.text);
+        await clearSelectedText();
+      }
+
+      setLoading(false);
+    }
+    init();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault();
+    if (!question.trim() || sending) return;
+
+    const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: question.trim(),
+      context: context || undefined,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setQuestion("");
+    setSending(true);
+
+    // Placeholder response — AI will be added in Phase 3
+    setTimeout(() => {
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content:
+          "Esta funcionalidade estará disponível na Fase 3 com integração de IA. " +
+          "Por enquanto, o side panel é um placeholder para o tira-dúvidas com agentes especializados por banca.",
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+      setSending(false);
+    }, 500);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginForm onSuccess={setUser} />;
+  }
+
+  return (
+    <div className="flex flex-col h-screen">
+      {/* Header */}
+      <div className="border-b border-gray-200 px-4 py-3">
+        <h1 className="text-base font-bold text-gray-900">Tira-Dúvidas</h1>
+        <p className="text-xs text-gray-500">
+          Pergunte sobre o conteúdo selecionado
+        </p>
+      </div>
+
+      {/* Context indicator */}
+      {context && (
+        <div className="mx-4 mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-xs font-medium text-blue-700 mb-1">Contexto selecionado:</p>
+          <p className="text-xs text-blue-600 line-clamp-3">{context}</p>
+          <button
+            onClick={() => setContext("")}
+            className="text-xs text-blue-400 hover:text-blue-600 mt-1"
+          >
+            Limpar contexto
+          </button>
+        </div>
+      )}
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {messages.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-sm text-gray-400">
+              Faça uma pergunta sobre o conteúdo que está estudando.
+            </p>
+          </div>
+        )}
+
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
+                msg.role === "user"
+                  ? "bg-brand-600 text-white"
+                  : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {msg.context && (
+                <p className="text-xs opacity-70 mb-1 italic">
+                  Sobre: &quot;{msg.context.slice(0, 80)}...&quot;
+                </p>
+              )}
+              {msg.content}
+            </div>
+          </div>
+        ))}
+
+        {sending && (
+          <div className="flex justify-start">
+            <div className="bg-gray-100 px-3 py-2 rounded-lg">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.1s" }}
+                />
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.2s" }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <form
+        onSubmit={handleSend}
+        className="border-t border-gray-200 p-3 flex gap-2"
+      >
+        <input
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="Digite sua dúvida..."
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+        />
+        <button
+          type="submit"
+          disabled={!question.trim() || sending}
+          className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Enviar
+        </button>
+      </form>
+    </div>
+  );
+}
