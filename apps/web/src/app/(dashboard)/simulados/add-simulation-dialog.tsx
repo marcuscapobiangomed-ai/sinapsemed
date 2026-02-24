@@ -36,22 +36,30 @@ interface SpecialtyRow {
   correct: number;
 }
 
+export interface SimulationFormData {
+  title: string;
+  banca_id: string | null;
+  source: string;
+  exam_date: string;
+  total_questions: number;
+  correct_answers: number;
+  duration_minutes: number | null;
+  notes: string;
+  specialty_results: SpecialtyRow[];
+  easy_total: number;
+  easy_correct: number;
+  medium_total: number;
+  medium_correct: number;
+  hard_total: number;
+  hard_correct: number;
+}
+
 interface AddSimulationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bancas: Banca[];
   specialties: Specialty[];
-  onAdd: (data: {
-    title: string;
-    banca_id: string | null;
-    source: string;
-    exam_date: string;
-    total_questions: number;
-    correct_answers: number;
-    duration_minutes: number | null;
-    notes: string;
-    specialty_results: SpecialtyRow[];
-  }) => void;
+  onAdd: (data: SimulationFormData) => void;
 }
 
 export function AddSimulationDialog({
@@ -71,6 +79,13 @@ export function AddSimulationDialog({
   const [notes, setNotes] = useState("");
   const [specialtyRows, setSpecialtyRows] = useState<SpecialtyRow[]>([]);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [showDifficulty, setShowDifficulty] = useState(false);
+  const [easyTotal, setEasyTotal] = useState("");
+  const [easyCorrect, setEasyCorrect] = useState("");
+  const [mediumTotal, setMediumTotal] = useState("");
+  const [mediumCorrect, setMediumCorrect] = useState("");
+  const [hardTotal, setHardTotal] = useState("");
+  const [hardCorrect, setHardCorrect] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function resetForm() {
@@ -84,6 +99,13 @@ export function AddSimulationDialog({
     setNotes("");
     setSpecialtyRows([]);
     setShowBreakdown(false);
+    setShowDifficulty(false);
+    setEasyTotal("");
+    setEasyCorrect("");
+    setMediumTotal("");
+    setMediumCorrect("");
+    setHardTotal("");
+    setHardCorrect("");
   }
 
   function addSpecialtyRow() {
@@ -128,6 +150,12 @@ export function AddSimulationDialog({
       duration_minutes: durationMinutes ? Number(durationMinutes) : null,
       notes,
       specialty_results: validRows,
+      easy_total: easyTotal ? Number(easyTotal) : 0,
+      easy_correct: easyCorrect ? Number(easyCorrect) : 0,
+      medium_total: mediumTotal ? Number(mediumTotal) : 0,
+      medium_correct: mediumCorrect ? Number(mediumCorrect) : 0,
+      hard_total: hardTotal ? Number(hardTotal) : 0,
+      hard_correct: hardCorrect ? Number(hardCorrect) : 0,
     });
 
     setIsSubmitting(false);
@@ -244,6 +272,97 @@ export function AddSimulationDialog({
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
             />
+          </div>
+
+          {/* Detalhamento por dificuldade */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">
+                Detalhamento por dificuldade
+              </Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7"
+                onClick={() => setShowDifficulty(!showDifficulty)}
+              >
+                {showDifficulty ? "Ocultar" : "Adicionar"}
+              </Button>
+            </div>
+
+            {showDifficulty && (
+              <div className="space-y-2 rounded-lg border p-3">
+                <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-1">
+                  <span>Nível</span>
+                  <span>Questões</span>
+                  <span>Acertos</span>
+                </div>
+                {/* Fácil */}
+                <div className="grid grid-cols-3 gap-2 items-center">
+                  <span className="text-sm font-medium text-green-600">Fácil</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    className="h-9"
+                    placeholder="0"
+                    value={easyTotal}
+                    onChange={(e) => setEasyTotal(e.target.value)}
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    max={easyTotal ? Number(easyTotal) : undefined}
+                    className="h-9"
+                    placeholder="0"
+                    value={easyCorrect}
+                    onChange={(e) => setEasyCorrect(e.target.value)}
+                  />
+                </div>
+                {/* Média */}
+                <div className="grid grid-cols-3 gap-2 items-center">
+                  <span className="text-sm font-medium text-amber-600">Média</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    className="h-9"
+                    placeholder="0"
+                    value={mediumTotal}
+                    onChange={(e) => setMediumTotal(e.target.value)}
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    max={mediumTotal ? Number(mediumTotal) : undefined}
+                    className="h-9"
+                    placeholder="0"
+                    value={mediumCorrect}
+                    onChange={(e) => setMediumCorrect(e.target.value)}
+                  />
+                </div>
+                {/* Difícil */}
+                <div className="grid grid-cols-3 gap-2 items-center">
+                  <span className="text-sm font-medium text-red-600">Difícil</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    className="h-9"
+                    placeholder="0"
+                    value={hardTotal}
+                    onChange={(e) => setHardTotal(e.target.value)}
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    max={hardTotal ? Number(hardTotal) : undefined}
+                    className="h-9"
+                    placeholder="0"
+                    value={hardCorrect}
+                    onChange={(e) => setHardCorrect(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Breakdown por especialidade */}

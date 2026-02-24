@@ -17,7 +17,7 @@ import { createClient } from "@/lib/supabase/client";
 import { SimulationCard } from "./simulation-card";
 import { AccuracyTrendChart } from "./accuracy-trend-chart";
 import { SpecialtyBreakdownChart } from "./specialty-breakdown-chart";
-import { AddSimulationDialog } from "./add-simulation-dialog";
+import { AddSimulationDialog, type SimulationFormData } from "./add-simulation-dialog";
 import type {
   Simulation,
   SimulationStats,
@@ -61,17 +61,7 @@ export function SimulationsDashboard({
   const [, startTransition] = useTransition();
   const router = useRouter();
 
-  async function handleAdd(data: {
-    title: string;
-    banca_id: string | null;
-    source: string;
-    exam_date: string;
-    total_questions: number;
-    correct_answers: number;
-    duration_minutes: number | null;
-    notes: string;
-    specialty_results: { specialty_id: string; questions: number; correct: number }[];
-  }) {
+  async function handleAdd(data: SimulationFormData) {
     const supabase = createClient();
 
     const { data: sim, error } = await supabase
@@ -85,6 +75,12 @@ export function SimulationsDashboard({
         correct_answers: data.correct_answers,
         duration_minutes: data.duration_minutes,
         notes: data.notes || null,
+        easy_total: data.easy_total,
+        easy_correct: data.easy_correct,
+        medium_total: data.medium_total,
+        medium_correct: data.medium_correct,
+        hard_total: data.hard_total,
+        hard_correct: data.hard_correct,
       })
       .select("id")
       .single();
