@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { groq, GROQ_MODEL } from "@/lib/ai";
+import { getGroq, GROQ_MODEL } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -62,7 +62,7 @@ Responda APENAS com JSON válido no formato:
   "suggestion": "breve explicação da melhoria feita (1 frase)"
 }`;
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: GROQ_MODEL,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.2,

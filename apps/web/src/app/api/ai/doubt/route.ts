@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { groq, GROQ_MODEL, GROQ_VISION_MODEL, buildMentorPrompt } from "@/lib/ai";
+import { getGroq, GROQ_MODEL, GROQ_VISION_MODEL, buildMentorPrompt } from "@/lib/ai";
 import type OpenAI from "openai";
 
 export const runtime = "nodejs";
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
 
   const model = hasImage ? GROQ_VISION_MODEL : GROQ_MODEL;
 
-  const stream = await groq.chat.completions.create({
+  const stream = await getGroq().chat.completions.create({
     model,
     messages: messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
     stream: true,

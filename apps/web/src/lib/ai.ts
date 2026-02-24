@@ -1,11 +1,16 @@
 import OpenAI from "openai";
 
-// Groq client (dev) — 100% compatible with OpenAI SDK
-// To switch to OpenAI for production: remove baseURL and change apiKey to OPENAI_API_KEY
-export const groq = new OpenAI({
-  baseURL: "https://api.groq.com/openai/v1",
-  apiKey: process.env.GROQ_API_KEY!,
-});
+// Groq client (dev) — 100% compatible with OpenAI SDK (lazy init to avoid build-time crash)
+let _groq: OpenAI | undefined;
+export function getGroq(): OpenAI {
+  if (!_groq) {
+    _groq = new OpenAI({
+      baseURL: "https://api.groq.com/openai/v1",
+      apiKey: process.env.GROQ_API_KEY!,
+    });
+  }
+  return _groq;
+}
 
 export const GROQ_MODEL = "llama-3.3-70b-versatile";
 export const GROQ_VISION_MODEL = "llama-3.2-90b-vision-preview";

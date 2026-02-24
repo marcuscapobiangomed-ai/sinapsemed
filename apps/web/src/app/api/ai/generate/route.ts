@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { groq, GROQ_MODEL } from "@/lib/ai";
+import { getGroq, GROQ_MODEL } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 20;
@@ -121,7 +121,7 @@ Retorne APENAS JSON válido no formato:
   "banca": []
 }`;
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: GROQ_MODEL,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.2,
