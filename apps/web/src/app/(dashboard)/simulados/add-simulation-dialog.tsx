@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ImagePlus, Loader2 } from "lucide-react";
 
 interface Banca {
   id: string;
@@ -54,6 +54,22 @@ export interface SimulationFormData {
   hard_correct: number;
 }
 
+interface ParsedSimulation {
+  title: string | null;
+  source: string | null;
+  exam_date: string | null;
+  total_questions: number | null;
+  correct_answers: number | null;
+  duration_minutes: number | null;
+  specialties: { name: string; questions: number; correct: number }[] | null;
+  easy_total: number | null;
+  easy_correct: number | null;
+  medium_total: number | null;
+  medium_correct: number | null;
+  hard_total: number | null;
+  hard_correct: number | null;
+}
+
 interface AddSimulationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -87,6 +103,9 @@ export function AddSimulationDialog({
   const [hardTotal, setHardTotal] = useState("");
   const [hardCorrect, setHardCorrect] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
+  const [parseError, setParseError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function resetForm() {
     setTitle("");
@@ -106,6 +125,7 @@ export function AddSimulationDialog({
     setMediumCorrect("");
     setHardTotal("");
     setHardCorrect("");
+    setParseError("");
   }
 
   function addSpecialtyRow() {
@@ -126,6 +146,88 @@ export function AddSimulationDialog({
   }
 
   const usedSpecialtyIds = new Set(specialtyRows.map((r) => r.specialty_id));
+
+  function applyParsedData(data: ParsedSimulation) {
+    if (data.title) setTitle(data.title);
+    if (data.source) setSource(data.source);
+    if (data.exam_date) setExamDate(data.exam_date);
+    if (data.total_questions != null) setTotalQuestions(String(data.total_questions));
+    if (data.correct_answers != null) setCorrectAnswers(String(data.correct_answers));
+    if (data.duration_minutes != null) setDurationMinutes(String(data.duration_minutes));
+
+    // Dificuldade
+    const hasDifficulty =
+      data.easy_total != null || data.medium_total != null || data.hard_total != null;
+    if (hasDifficulty) {
+      setShowDifficulty(true);
+      if (data.easy_total != null) setEasyTotal(String(data.easy_total));
+      if (data.easy_correct != null) setEasyCorrect(String(data.easy_correct));
+      if (data.medium_total != null) setMediumTotal(String(data.medium_total));
+      if (data.medium_correct != null) setMediumCorrect(String(data.medium_correct));
+      if (data.hard_total != null) setHardTotal(String(data.hard_total));
+      if (data.hard_correct != null) setHardCorrect(String(data.hard_correct));
+    }
+
+    // Especialidades — fuzzy match por nome
+    if (data.specialties?.length) {
+      const rows: SpecialtyRow[] = [];
+      for (const s of data.specialties) {
+        const nameLower = s.name.toLowerCase();
+        const match = specialties.find((sp) => {
+          const spLower = sp.name.toLowerCase();
+          return spLower.includes(nameLower) || nameLower.includes(spLower);
+        });
+        if (match) {
+          rows.push({
+            specialty_id: match.id,
+            questions: s.questions,
+            correct: s.correct,
+          });
+        }
+      }
+      if (rows.length > 0) {
+        setShowBreakdown(true);
+        setSpecialtyRows(rows);
+      }
+    }
+  }
+
+  async function handleImageUpload(file: File) {
+    setIsParsing(true);
+    setParseError("");
+
+    try {
+      // Convert to base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch("/api/ai/parse-simulation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64 }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erro ao analisar imagem");
+      }
+
+      const data: ParsedSimulation = await res.json();
+      applyParsedData(data);
+    } catch (err) {
+      setParseError(
+        err instanceof Error ? err.message : "Erro ao analisar imagem. Tente novamente.",
+      );
+    } finally {
+      setIsParsing(false);
+      // Reset file input so user can re-upload
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -169,6 +271,40 @@ export function AddSimulationDialog({
         <DialogHeader>
           <DialogTitle>Registrar Simulado</DialogTitle>
         </DialogHeader>
+
+        {/* Upload de print */}
+        <div className="rounded-lg border border-dashed p-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageUpload(file);
+            }}
+          />
+
+          {isParsing ? (
+            <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Analisando print...
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="flex w-full items-center justify-center gap-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <ImagePlus className="h-4 w-4" />
+              Preencher com print do resultado
+            </button>
+          )}
+
+          {parseError && (
+            <p className="text-xs text-destructive mt-1.5 text-center">{parseError}</p>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           {/* Título */}
@@ -475,7 +611,8 @@ export function AddSimulationDialog({
               !correctAnswers ||
               Number(correctAnswers) < 0 ||
               Number(correctAnswers) > Number(totalQuestions) ||
-              isSubmitting
+              isSubmitting ||
+              isParsing
             }
           >
             {isSubmitting ? "Salvando..." : "Salvar simulado"}
