@@ -10,10 +10,14 @@ export const groq = new OpenAI({
 export const GROQ_MODEL = "llama-3.3-70b-versatile";
 export const GROQ_VISION_MODEL = "llama-3.2-90b-vision-preview";
 
-// OpenAI client — used for embeddings only
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// OpenAI client — used for embeddings only (lazy init to avoid build-time crash)
+let _openai: OpenAI | undefined;
+export function getOpenAIClient(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+  }
+  return _openai;
+}
 
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 

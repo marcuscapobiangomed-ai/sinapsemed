@@ -1,10 +1,9 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Layers } from "lucide-react";
+import { Layers } from "lucide-react";
 import { CreateDeckDialog } from "./create-deck-dialog";
 
 export const metadata: Metadata = {
