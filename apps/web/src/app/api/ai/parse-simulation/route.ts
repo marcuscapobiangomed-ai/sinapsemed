@@ -52,6 +52,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Validate image is a data URL or valid URL
+  if (!image.startsWith("data:") && !image.startsWith("http")) {
+    return NextResponse.json(
+      { error: "Formato de imagem inválido" },
+      { status: 400 },
+    );
+  }
+
   try {
     const groq = getGroq();
 
@@ -88,11 +96,24 @@ export async function POST(req: NextRequest) {
       jsonStr = codeBlockMatch[1].trim();
     }
 
-    const parsed = JSON.parse(jsonStr);
+    // Try to parse JSON, with fallback to find JSON object in string
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonStr);
+    } catch {
+      // Try to extract JSON object from the string if it contains extra text
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error("Could not extract JSON from response");
+      }
+    }
 
     return NextResponse.json(parsed);
   } catch (error) {
-    console.error("[parse-simulation] Error:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("[parse-simulation] Error:", errorMsg, { error });
     return NextResponse.json(
       { error: "Erro ao processar a imagem. Tente novamente." },
       { status: 500 },
