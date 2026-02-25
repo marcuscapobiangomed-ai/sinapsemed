@@ -13,6 +13,7 @@ import type {
   MessageResponse,
   CreateFlashcardPayload,
   SelectedTextPayload,
+  CreateDeckPayload,
 } from "@/lib/messages";
 
 export default defineBackground(() => {
@@ -135,6 +136,39 @@ export default defineBackground(() => {
         if (decks) await setCachedDecks(decks);
 
         return { success: true, data: decks };
+      }
+
+      case "CREATE_DECK": {
+        const payload = message.payload as CreateDeckPayload;
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) return { success: false, error: "Não autenticado" };
+
+        const { data: deck, error } = await supabase
+          .from("decks")
+          .insert({
+            user_id: user.id,
+            title: payload.title.trim(),
+            description: payload.description?.trim() ?? null,
+            color: payload.color ?? "#3B82F6",
+          })
+          .select("id, title, color")
+          .single();
+
+        if (error) return { success: false, error: error.message };
+
+        // Refresh cached decks
+        const { data: decks } = await supabase
+          .from("decks")
+          .select("id, title, color")
+          .eq("user_id", user.id)
+          .eq("is_archived", false)
+          .order("title");
+        if (decks) await setCachedDecks(decks);
+
+        return { success: true, data: deck };
       }
 
       case "CREATE_FLASHCARD": {

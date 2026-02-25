@@ -6,6 +6,7 @@ export type MessageType =
   | "SET_SELECTED_TEXT"
   | "GET_AUTH_STATE"
   | "GET_DECKS"
+  | "CREATE_DECK"
   | "SYNC_QUEUE"
   | "GET_QUEUE_COUNT"
   | "OPEN_SIDEPANEL"
@@ -30,6 +31,12 @@ export interface SelectedTextPayload {
   text: string;
   url: string;
   title: string;
+}
+
+export interface CreateDeckPayload {
+  title: string;
+  description?: string;
+  color?: string;
 }
 
 export interface MessageResponse<T = unknown> {

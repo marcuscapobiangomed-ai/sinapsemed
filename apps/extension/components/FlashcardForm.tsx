@@ -53,6 +53,14 @@ export function FlashcardForm({
   const [duplicate, setDuplicate] = useState<{ id: string; front: string; back: string } | null>(null);
   const [ignoreDuplicate, setIgnoreDuplicate] = useState(false);
 
+  // Create deck state
+  const [showCreateDeck, setShowCreateDeck] = useState(false);
+  const [newDeckTitle, setNewDeckTitle] = useState("");
+  const [newDeckDesc, setNewDeckDesc] = useState("");
+  const [newDeckColor, setNewDeckColor] = useState("#3B82F6");
+  const [creatingDeck, setCreatingDeck] = useState(false);
+  const [deckError, setDeckError] = useState("");
+
   useEffect(() => {
     async function loadDecks() {
       const cached = await getCachedDecks();
@@ -144,6 +152,40 @@ export function FlashcardForm({
     return data ?? null;
   }
 
+  async function handleCreateDeck(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newDeckTitle.trim()) return;
+
+    setCreatingDeck(true);
+    setDeckError("");
+
+    const response = await sendMessage<{ id: string; title: string; color: string }>({
+      type: "CREATE_DECK",
+      payload: {
+        title: newDeckTitle.trim(),
+        description: newDeckDesc.trim() || undefined,
+        color: newDeckColor,
+      },
+    });
+
+    if (response.success && response.data) {
+      // Add new deck to list
+      const updatedDecks = [...decks, response.data].sort((a, b) => a.title.localeCompare(b.title));
+      setDecks(updatedDecks);
+      setDeckId(response.data.id);
+
+      // Reset form
+      setNewDeckTitle("");
+      setNewDeckDesc("");
+      setNewDeckColor("#3B82F6");
+      setShowCreateDeck(false);
+    } else {
+      setDeckError(response.error ?? "Erro ao criar deck");
+    }
+
+    setCreatingDeck(false);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!front.trim() || !back.trim() || !deckId) return;
@@ -227,17 +269,97 @@ export function FlashcardForm({
         <label htmlFor="deck" className="block text-sm font-medium text-gray-700 mb-1">
           Deck
         </label>
-        <select
-          id="deck"
-          value={deckId}
-          onChange={(e) => setDeckId(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
-        >
-          {decks.map((deck) => (
-            <option key={deck.id} value={deck.id}>{deck.title}</option>
-          ))}
-        </select>
+        <div className="flex gap-2">
+          <select
+            id="deck"
+            value={deckId}
+            onChange={(e) => setDeckId(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
+          >
+            {decks.map((deck) => (
+              <option key={deck.id} value={deck.id}>{deck.title}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setShowCreateDeck(!showCreateDeck)}
+            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+          >
+            + Novo
+          </button>
+        </div>
       </div>
+
+      {/* Create deck form */}
+      {showCreateDeck && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-3">
+          <p className="text-xs font-semibold text-blue-900">📚 Criar novo deck</p>
+          <form onSubmit={handleCreateDeck} className="space-y-2">
+            <div>
+              <input
+                type="text"
+                value={newDeckTitle}
+                onChange={(e) => setNewDeckTitle(e.target.value)}
+                placeholder="Nome do deck (ex: Cardiologia)"
+                className="w-full px-2.5 py-1.5 border border-blue-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                required
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                value={newDeckDesc}
+                onChange={(e) => setNewDeckDesc(e.target.value)}
+                placeholder="Descrição (opcional)"
+                className="w-full px-2.5 py-1.5 border border-blue-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              />
+            </div>
+            <div className="flex gap-1.5">
+              <span className="text-[11px] text-blue-700 font-medium self-center">Cor:</span>
+              <div className="flex gap-1">
+                {["#3B82F6", "#8B5CF6", "#EC4899", "#EF4444", "#F59E0B", "#22C55E"].map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setNewDeckColor(color)}
+                    className="h-6 w-6 rounded-full border-2 transition-transform"
+                    style={{
+                      backgroundColor: color,
+                      borderColor: newDeckColor === color ? "#1F2937" : "transparent",
+                      transform: newDeckColor === color ? "scale(1.15)" : "scale(1)",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            {deckError && (
+              <p className="text-xs text-red-600">{deckError}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={creatingDeck || !newDeckTitle.trim()}
+                className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {creatingDeck ? "Criando..." : "Criar"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateDeck(false);
+                  setNewDeckTitle("");
+                  setNewDeckDesc("");
+                  setNewDeckColor("#3B82F6");
+                  setDeckError("");
+                }}
+                className="flex-1 py-1.5 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg text-xs font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Front */}
       <div>
