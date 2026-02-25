@@ -229,6 +229,22 @@ export function AddSimulationDialog({
     }
   }
 
+  function handlePaste(e: React.ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items || isParsing) return;
+
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          handleImageUpload(file);
+          e.preventDefault();
+          break;
+        }
+      }
+    }
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -267,7 +283,7 @@ export function AddSimulationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto" onPaste={handlePaste}>
         <DialogHeader>
           <DialogTitle>Registrar Simulado</DialogTitle>
         </DialogHeader>
@@ -291,14 +307,19 @@ export function AddSimulationDialog({
               Analisando print...
             </div>
           ) : (
-            <button
-              type="button"
-              className="flex w-full items-center justify-center gap-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <ImagePlus className="h-4 w-4" />
-              Preencher com print do resultado
-            </button>
+            <div className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <ImagePlus className="h-4 w-4" />
+                Preencher com print do resultado
+              </button>
+              <p className="text-xs text-center text-muted-foreground">
+                Ou cole uma imagem com <kbd className="bg-accent px-1 py-0.5 rounded text-xs font-semibold">Ctrl+V</kbd>
+              </p>
+            </div>
           )}
 
           {parseError && (

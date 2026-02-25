@@ -41,6 +41,9 @@ export default async function DecksPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               Crie seu primeiro deck para começar a adicionar flashcards
             </p>
+            <div className="mt-6">
+              <CreateDeckDialog />
+            </div>
           </CardContent>
         </Card>
       ) : (
