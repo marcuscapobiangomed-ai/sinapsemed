@@ -100,6 +100,19 @@ export function OnboardingForm({ userId, currentName, bancas }: OnboardingFormPr
       return;
     }
 
+    // Dispara email de boas-vindas (fire-and-forget)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      fetch("/api/send-welcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.get("full_name") as string,
+          email: user.email,
+        }),
+      }).catch(() => {/* silencia erros de email */});
+    }
+
     toast.success("Perfil configurado!");
     router.push("/dashboard");
     router.refresh();

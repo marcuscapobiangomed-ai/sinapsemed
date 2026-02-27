@@ -30,6 +30,7 @@
     "react": "^19",
     "react-dom": "^19",
     "recharts": "^2.15.4",
+    "resend": "^6.9.2",
     "sonner": "^2",
     "sql.js": "^1.14.0",
     "stripe": "^20.3.1",
