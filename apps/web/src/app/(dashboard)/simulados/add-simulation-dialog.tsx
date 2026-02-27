@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,6 +77,8 @@ interface AddSimulationDialogProps {
   bancas: Banca[];
   specialties: Specialty[];
   onAdd: (data: SimulationFormData) => void;
+  mode?: "add" | "edit";
+  initialData?: SimulationFormData;
 }
 
 export function AddSimulationDialog({
@@ -85,6 +87,8 @@ export function AddSimulationDialog({
   bancas,
   specialties,
   onAdd,
+  mode = "add",
+  initialData,
 }: AddSimulationDialogProps) {
   const [title, setTitle] = useState("");
   const [bancaId, setBancaId] = useState("");
@@ -107,6 +111,34 @@ export function AddSimulationDialog({
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Populate form when dialog opens in edit mode
+  useEffect(() => {
+    if (open && mode === "edit" && initialData) {
+      setTitle(initialData.title);
+      setBancaId(initialData.banca_id ?? "");
+      setSource(initialData.source ?? "");
+      setExamDate(initialData.exam_date);
+      setTotalQuestions(String(initialData.total_questions));
+      setCorrectAnswers(String(initialData.correct_answers));
+      setDurationMinutes(initialData.duration_minutes != null ? String(initialData.duration_minutes) : "");
+      setNotes(initialData.notes ?? "");
+      setSpecialtyRows(initialData.specialty_results);
+      setShowBreakdown(initialData.specialty_results.length > 0);
+      const hasDiff = initialData.easy_total > 0 || initialData.medium_total > 0 || initialData.hard_total > 0;
+      setShowDifficulty(hasDiff);
+      setEasyTotal(initialData.easy_total ? String(initialData.easy_total) : "");
+      setEasyCorrect(initialData.easy_correct ? String(initialData.easy_correct) : "");
+      setMediumTotal(initialData.medium_total ? String(initialData.medium_total) : "");
+      setMediumCorrect(initialData.medium_correct ? String(initialData.medium_correct) : "");
+      setHardTotal(initialData.hard_total ? String(initialData.hard_total) : "");
+      setHardCorrect(initialData.hard_correct ? String(initialData.hard_correct) : "");
+      setParseError("");
+    } else if (!open) {
+      resetForm();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function resetForm() {
     setTitle("");
@@ -334,14 +366,14 @@ export function AddSimulationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto" onPaste={handlePaste}>
         <DialogHeader>
-          <DialogTitle>Registrar Simulado</DialogTitle>
+          <DialogTitle>{mode === "edit" ? "Editar Simulado" : "Registrar Simulado"}</DialogTitle>
           <DialogDescription className="sr-only">
-            Formulário para registrar o resultado de um simulado de residência médica.
+            {mode === "edit" ? "Formulário para editar o registro de um simulado." : "Formulário para registrar o resultado de um simulado de residência médica."}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Upload de print */}
-        <div className="rounded-lg border border-dashed p-3">
+        {/* Upload de print — apenas no modo adicionar */}
+        {mode === "add" && <div className="rounded-lg border border-dashed p-3">
           <input
             ref={fileInputRef}
             type="file"
@@ -377,7 +409,7 @@ export function AddSimulationDialog({
           {parseError && (
             <p className="text-xs text-destructive mt-1.5 text-center">{parseError}</p>
           )}
-        </div>
+        </div>}
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           {/* Título */}
@@ -688,7 +720,7 @@ export function AddSimulationDialog({
               isParsing
             }
           >
-            {isSubmitting ? "Salvando..." : "Salvar simulado"}
+            {isSubmitting ? "Salvando..." : mode === "edit" ? "Atualizar simulado" : "Salvar simulado"}
           </Button>
         </form>
       </DialogContent>

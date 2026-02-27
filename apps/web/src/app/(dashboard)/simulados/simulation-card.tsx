@@ -3,12 +3,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Clock, FileText } from "lucide-react";
+import { Trash2, Clock, FileText, Pencil } from "lucide-react";
 import type { Simulation } from "@/lib/simulation-queries";
 
 interface SimulationCardProps {
   simulation: Simulation;
   onDelete: (id: string) => void;
+  onEdit: (simulation: Simulation) => void;
 }
 
 function formatDate(dateStr: string): string {
@@ -22,7 +23,7 @@ function getAccuracyColor(accuracy: number): string {
   return "text-red-600 dark:text-red-400";
 }
 
-export function SimulationCard({ simulation, onDelete }: SimulationCardProps) {
+export function SimulationCard({ simulation, onDelete, onEdit }: SimulationCardProps) {
   return (
     <Card className="group hover:border-primary/30 transition-colors">
       <CardContent className="p-4">
@@ -72,14 +73,24 @@ export function SimulationCard({ simulation, onDelete }: SimulationCardProps) {
               </p>
             </div>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => onDelete(simulation.id)}
-            >
-              <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-            </Button>
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onEdit(simulation)}
+              >
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onDelete(simulation.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>

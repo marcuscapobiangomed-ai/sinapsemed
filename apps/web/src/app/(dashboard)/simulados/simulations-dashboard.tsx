@@ -57,6 +57,9 @@ export function SimulationsDashboard({
   limitInfo,
 }: SimulationsDashboardProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingSimulation, setEditingSimulation] = useState<Simulation | null>(null);
+  const [editInitialData, setEditInitialData] = useState<SimulationFormData | null>(null);
   const [simulations, setSimulations] = useState(initialSimulations);
   const [, startTransition] = useTransition();
   const router = useRouter();
@@ -136,6 +139,113 @@ export function SimulationsDashboard({
 
     setSimulations((prev) => prev.filter((s) => s.id !== id));
 
+    startTransition(() => {
+      router.refresh();
+    });
+  }
+
+  async function handleEditOpen(sim: Simulation) {
+    const supabase = createClient();
+
+    const [{ data: fullSim }, { data: results }] = await Promise.all([
+      supabase
+        .from("simulations")
+        .select("banca_id, easy_total, easy_correct, medium_total, medium_correct, hard_total, hard_correct")
+        .eq("id", sim.id)
+        .single(),
+      supabase
+        .from("simulation_results")
+        .select("specialty_id, questions, correct")
+        .eq("simulation_id", sim.id),
+    ]);
+
+    setEditingSimulation(sim);
+    setEditInitialData({
+      title: sim.title,
+      banca_id: fullSim?.banca_id ?? null,
+      source: sim.source ?? "",
+      exam_date: sim.exam_date,
+      total_questions: sim.total_questions,
+      correct_answers: sim.correct_answers,
+      duration_minutes: sim.duration_minutes,
+      notes: sim.notes ?? "",
+      specialty_results: (results ?? []) as { specialty_id: string; questions: number; correct: number }[],
+      easy_total: fullSim?.easy_total ?? 0,
+      easy_correct: fullSim?.easy_correct ?? 0,
+      medium_total: fullSim?.medium_total ?? 0,
+      medium_correct: fullSim?.medium_correct ?? 0,
+      hard_total: fullSim?.hard_total ?? 0,
+      hard_correct: fullSim?.hard_correct ?? 0,
+    });
+    setEditDialogOpen(true);
+  }
+
+  async function handleEdit(data: SimulationFormData) {
+    if (!editingSimulation) return;
+    const supabase = createClient();
+
+    await supabase
+      .from("simulations")
+      .update({
+        title: data.title,
+        banca_id: data.banca_id,
+        source: data.source || null,
+        exam_date: data.exam_date,
+        total_questions: data.total_questions,
+        correct_answers: data.correct_answers,
+        duration_minutes: data.duration_minutes,
+        notes: data.notes || null,
+        easy_total: data.easy_total,
+        easy_correct: data.easy_correct,
+        medium_total: data.medium_total,
+        medium_correct: data.medium_correct,
+        hard_total: data.hard_total,
+        hard_correct: data.hard_correct,
+      })
+      .eq("id", editingSimulation.id);
+
+    // Replace specialty results
+    await supabase.from("simulation_results").delete().eq("simulation_id", editingSimulation.id);
+    if (data.specialty_results.length > 0) {
+      const validRows = data.specialty_results.filter(
+        (r) => r.specialty_id && r.questions > 0 && r.correct >= 0,
+      );
+      if (validRows.length > 0) {
+        await supabase.from("simulation_results").insert(
+          validRows.map((r) => ({
+            simulation_id: editingSimulation.id,
+            specialty_id: r.specialty_id,
+            questions: r.questions,
+            correct: r.correct,
+          })),
+        );
+      }
+    }
+
+    const accuracy = data.total_questions > 0
+      ? Math.round((data.correct_answers / data.total_questions) * 100)
+      : 0;
+
+    setSimulations((prev) =>
+      prev.map((s) =>
+        s.id === editingSimulation.id
+          ? {
+              ...s,
+              title: data.title,
+              banca_name: bancas.find((b) => b.id === data.banca_id)?.name ?? null,
+              source: data.source || null,
+              exam_date: data.exam_date,
+              total_questions: data.total_questions,
+              correct_answers: data.correct_answers,
+              accuracy,
+              duration_minutes: data.duration_minutes,
+              notes: data.notes || null,
+            }
+          : s,
+      ),
+    );
+
+    setEditingSimulation(null);
     startTransition(() => {
       router.refresh();
     });
@@ -256,18 +366,30 @@ export function SimulationsDashboard({
               key={sim.id}
               simulation={sim}
               onDelete={handleDelete}
+              onEdit={handleEditOpen}
             />
           ))
         )}
       </div>
 
-      {/* Dialog */}
+      {/* Dialog — Adicionar */}
       <AddSimulationDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         bancas={bancas}
         specialties={specialties}
         onAdd={handleAdd}
+      />
+
+      {/* Dialog — Editar */}
+      <AddSimulationDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        bancas={bancas}
+        specialties={specialties}
+        onAdd={handleEdit}
+        mode="edit"
+        initialData={editInitialData ?? undefined}
       />
     </div>
   );
