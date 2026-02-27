@@ -192,18 +192,58 @@ export function AddSimulationDialog({
     }
   }
 
+  async function compressImage(file: File, maxSizeBytes = 3_500_000): Promise<string> {
+    // Lê a imagem original
+    const original = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+
+        // Limita dimensões a 1600px preservando proporção
+        const MAX_DIM = 1600;
+        let { width, height } = img;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Tenta qualidades decrescentes até ficar abaixo do limite
+        let quality = 0.85;
+        let result = canvas.toDataURL("image/jpeg", quality);
+        while (result.length > maxSizeBytes && quality > 0.3) {
+          quality -= 0.1;
+          result = canvas.toDataURL("image/jpeg", quality);
+        }
+        resolve(result);
+      };
+      img.src = original;
+    });
+  }
+
   async function handleImageUpload(file: File) {
     setIsParsing(true);
     setParseError("");
 
     try {
-      // Convert to base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      // Comprime a imagem para respeitar o limite de 4MB do Groq
+      const base64 = await compressImage(file);
 
       const res = await fetch("/api/ai/parse-simulation", {
         method: "POST",
@@ -217,6 +257,14 @@ export function AddSimulationDialog({
       }
 
       const data: ParsedSimulation = await res.json();
+
+      // Verifica se a IA extraiu pelo menos um campo útil
+      const hasData = data.title || data.total_questions || data.correct_answers || data.exam_date;
+      if (!hasData) {
+        setParseError("Não foi possível extrair dados da imagem. Verifique se o print mostra o resultado do simulado e tente novamente.");
+        return;
+      }
+
       applyParsedData(data);
     } catch (err) {
       setParseError(
