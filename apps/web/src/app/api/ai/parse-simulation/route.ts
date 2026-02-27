@@ -12,12 +12,12 @@ Analise a imagem enviada e extraia TODOS os dados visíveis do resultado do simu
 
 Retorne APENAS um objeto JSON válido com os seguintes campos:
 - "title": nome do simulado/prova (string ou null)
-- "source": plataforma de origem — ex: "Medway", "Estratégia MED", "Revisamed", "Sanar" (string ou null)
+- "source": plataforma de origem — ex: "Medway", "Estratégia MED", "Revisamed", "Sanar", "AQFM", "QConcursos" (string ou null)
 - "exam_date": data da prova no formato YYYY-MM-DD (string ou null)
 - "total_questions": total de questões (número inteiro ou null)
 - "correct_answers": total de acertos (número inteiro ou null)
 - "duration_minutes": duração em minutos (número inteiro ou null)
-- "specialties": lista de especialidades com breakdown — cada item com "name" (string), "questions" (int), "correct" (int). Use null se não houver dados por especialidade.
+- "specialties": lista de especialidades com breakdown — cada item com "name" (string), "questions" (int), "correct" (int ou null). Use null se não houver dados por especialidade.
 - "easy_total": total de questões fáceis (int ou null)
 - "easy_correct": acertos em questões fáceis (int ou null)
 - "medium_total": total de questões médias (int ou null)
@@ -27,8 +27,9 @@ Retorne APENAS um objeto JSON válido com os seguintes campos:
 
 Regras:
 - Se um campo não estiver visível na imagem, use null.
-- Se a imagem mostrar porcentagem de acerto mas não o número absoluto de acertos, calcule a partir do total de questões e da porcentagem (arredonde para inteiro).
-- Se houver "taxa de acerto" geral (ex: 72%) e total de questões (ex: 100), calcule correct_answers = round(72/100 * 100) = 72.
+- Se a imagem mostrar "X/Y acertos" ou "acertos: X/Y", então correct_answers=X e total_questions=Y.
+- Se a imagem mostrar porcentagem de acerto (ex: 93%) e total de questões (ex: 14), calcule correct_answers = round(93/100 * 14) = 13.
+- Para duração no formato "0h 12min 57s", converta para minutos inteiros (ex: 13).
 - Para especialidades, extraia o nome exatamente como aparece na imagem.
 - Não invente dados que não estejam na imagem.
 - Retorne APENAS o JSON, sem texto adicional.`;
@@ -46,24 +47,17 @@ export async function POST(req: NextRequest) {
   const { image } = (await req.json()) as { image?: string };
 
   if (!image) {
-    return NextResponse.json(
-      { error: "Imagem é obrigatória" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Imagem é obrigatória" }, { status: 400 });
   }
 
-  // Validate image is a data URL or valid URL
   if (!image.startsWith("data:") && !image.startsWith("http")) {
-    return NextResponse.json(
-      { error: "Formato de imagem inválido" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Formato de imagem inválido" }, { status: 400 });
   }
 
   if (!process.env.GROQ_API_KEY) {
     console.error("[parse-simulation] GROQ_API_KEY não configurada");
     return NextResponse.json(
-      { error: "Serviço de IA não configurado. Contate o suporte." },
+      { error: "Serviço de IA não configurado. Adicione GROQ_API_KEY no Vercel." },
       { status: 503 },
     );
   }
@@ -74,7 +68,7 @@ export async function POST(req: NextRequest) {
     type ContentPart = OpenAI.Chat.Completions.ChatCompletionContentPart;
 
     const userContent: ContentPart[] = [
-      { type: "text", text: "Extraia os dados do resultado deste simulado:" },
+      { type: "text", text: "Extraia os dados do resultado deste simulado e retorne apenas o JSON:" },
       { type: "image_url", image_url: { url: image } },
     ];
 
@@ -97,31 +91,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse JSON from response (handle markdown code blocks)
+    // Parse JSON (suporta blocos de código markdown)
     let jsonStr = raw;
     const codeBlockMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (codeBlockMatch) {
-      jsonStr = codeBlockMatch[1].trim();
-    }
+    if (codeBlockMatch) jsonStr = codeBlockMatch[1].trim();
 
-    // Try to parse JSON, with fallback to find JSON object in string
     let parsed;
     try {
       parsed = JSON.parse(jsonStr);
     } catch {
-      // Try to extract JSON object from the string if it contains extra text
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         parsed = JSON.parse(jsonMatch[0]);
       } else {
-        throw new Error("Could not extract JSON from response");
+        throw new Error("Resposta da IA não contém JSON válido");
       }
     }
 
     return NextResponse.json(parsed);
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error("[parse-simulation] Error:", errorMsg, { error });
+    console.error("[parse-simulation] Error:", errorMsg);
     return NextResponse.json(
       { error: "Erro ao processar a imagem. Tente novamente." },
       { status: 500 },
