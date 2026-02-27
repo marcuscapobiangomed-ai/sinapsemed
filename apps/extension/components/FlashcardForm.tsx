@@ -152,8 +152,7 @@ export function FlashcardForm({
     return data ?? null;
   }
 
-  async function handleCreateDeck(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreateDeck() {
     if (!newDeckTitle.trim()) return;
 
     setCreatingDeck(true);
@@ -294,26 +293,22 @@ export function FlashcardForm({
       {showCreateDeck && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-3">
           <p className="text-xs font-semibold text-blue-900">📚 Criar novo deck</p>
-          <form onSubmit={handleCreateDeck} className="space-y-2">
-            <div>
-              <input
-                type="text"
-                value={newDeckTitle}
-                onChange={(e) => setNewDeckTitle(e.target.value)}
-                placeholder="Nome do deck (ex: Cardiologia)"
-                className="w-full px-2.5 py-1.5 border border-blue-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                required
-              />
-            </div>
-            <div>
-              <input
-                type="text"
-                value={newDeckDesc}
-                onChange={(e) => setNewDeckDesc(e.target.value)}
-                placeholder="Descrição (opcional)"
-                className="w-full px-2.5 py-1.5 border border-blue-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-              />
-            </div>
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={newDeckTitle}
+              onChange={(e) => setNewDeckTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCreateDeck()}
+              placeholder="Nome do deck (ex: Cardiologia)"
+              className="w-full px-2.5 py-1.5 border border-blue-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            />
+            <input
+              type="text"
+              value={newDeckDesc}
+              onChange={(e) => setNewDeckDesc(e.target.value)}
+              placeholder="Descrição (opcional)"
+              className="w-full px-2.5 py-1.5 border border-blue-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            />
             <div className="flex gap-1.5">
               <span className="text-[11px] text-blue-700 font-medium self-center">Cor:</span>
               <div className="flex gap-1">
@@ -337,7 +332,8 @@ export function FlashcardForm({
             )}
             <div className="flex gap-2">
               <button
-                type="submit"
+                type="button"
+                onClick={handleCreateDeck}
                 disabled={creatingDeck || !newDeckTitle.trim()}
                 className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -357,7 +353,7 @@ export function FlashcardForm({
                 Cancelar
               </button>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
