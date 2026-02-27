@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -334,6 +335,9 @@ export function AddSimulationDialog({
       <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto" onPaste={handlePaste}>
         <DialogHeader>
           <DialogTitle>Registrar Simulado</DialogTitle>
+          <DialogDescription className="sr-only">
+            Formulário para registrar o resultado de um simulado de residência médica.
+          </DialogDescription>
         </DialogHeader>
 
         {/* Upload de print */}
