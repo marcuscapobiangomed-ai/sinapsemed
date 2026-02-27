@@ -19,9 +19,8 @@ const chartConfig = {
   hard_incorrect: { label: "Difícil ✗", color: "#dc2626" },
 } satisfies ChartConfig;
 
-function formatDate(dateStr: string): string {
-  const [, m, d] = dateStr.split("-");
-  return `${d}/${m}`;
+function truncateTitle(title: string, maxLen = 14): string {
+  return title.length > maxLen ? title.slice(0, maxLen) + "…" : title;
 }
 
 interface ComplexityChartProps {
@@ -62,11 +61,16 @@ export function ComplexityChart({ data }: ComplexityChartProps) {
           <BarChart data={withDifficulty} margin={{ left: -20, right: 12 }}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="exam_date"
-              tickFormatter={formatDate}
+              dataKey="title"
+              tickFormatter={truncateTitle}
               tickLine={false}
               axisLine={false}
               tickMargin={8}
+              interval={0}
+              angle={-25}
+              textAnchor="end"
+              height={55}
+              tick={{ fontSize: 11 }}
             />
             <YAxis
               tickLine={false}
@@ -77,22 +81,31 @@ export function ComplexityChart({ data }: ComplexityChartProps) {
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const d = payload[0]?.payload as ComplexityBreakdownPoint;
+                const [y, m, day] = d.exam_date.split("-");
+                const dateLabel = `${day}/${m}/${y}`;
                 return (
-                  <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
-                    <p className="font-medium mb-1">{d.title}</p>
-                    <div className="space-y-0.5 text-xs">
-                      <p>
-                        <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: "#86efac" }} />
-                        Fácil: {d.easy_correct}/{d.easy_correct + d.easy_incorrect}
-                      </p>
-                      <p>
-                        <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: "#22c55e" }} />
-                        Média: {d.medium_correct}/{d.medium_correct + d.medium_incorrect}
-                      </p>
-                      <p>
-                        <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: "#15803d" }} />
-                        Difícil: {d.hard_correct}/{d.hard_correct + d.hard_incorrect}
-                      </p>
+                  <div className="rounded-lg border bg-background p-3 shadow-md text-sm max-w-[220px]">
+                    <p className="font-medium mb-0.5 leading-tight">{d.title}</p>
+                    <p className="text-xs text-muted-foreground mb-2">{dateLabel}</p>
+                    <div className="space-y-1 text-xs">
+                      {(d.easy_correct + d.easy_incorrect) > 0 && (
+                        <p>
+                          <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: "#86efac" }} />
+                          Fácil: {d.easy_correct}/{d.easy_correct + d.easy_incorrect} ({Math.round(d.easy_correct / (d.easy_correct + d.easy_incorrect) * 100)}%)
+                        </p>
+                      )}
+                      {(d.medium_correct + d.medium_incorrect) > 0 && (
+                        <p>
+                          <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: "#22c55e" }} />
+                          Média: {d.medium_correct}/{d.medium_correct + d.medium_incorrect} ({Math.round(d.medium_correct / (d.medium_correct + d.medium_incorrect) * 100)}%)
+                        </p>
+                      )}
+                      {(d.hard_correct + d.hard_incorrect) > 0 && (
+                        <p>
+                          <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: "#15803d" }} />
+                          Difícil: {d.hard_correct}/{d.hard_correct + d.hard_incorrect} ({Math.round(d.hard_correct / (d.hard_correct + d.hard_incorrect) * 100)}%)
+                        </p>
+                      )}
                     </div>
                   </div>
                 );

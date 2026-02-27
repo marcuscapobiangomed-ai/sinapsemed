@@ -1,6 +1,6 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis, ReferenceLine } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis, ReferenceLine } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -13,6 +13,9 @@ import type { WaterfallData } from "@/lib/analytics-queries";
 const chartConfig = {
   visible: { label: "Delta", color: "var(--color-primary)" },
 } satisfies ChartConfig;
+
+const COLOR_BEFORE = "#94a3b8"; // cinza — nota anterior (ponto de partida)
+const COLOR_AFTER = "var(--color-primary)"; // cor primária — nota atual (ponto de chegada)
 
 interface WaterfallChartProps {
   data: WaterfallData | null;
@@ -39,7 +42,8 @@ export function WaterfallChart({ data }: WaterfallChartProps) {
 
   // Transform data for stacked bar waterfall
   // Each bar has an invisible "base" and a visible "delta"
-  const chartData = data.segments.map((seg) => ({
+  const isLastIndex = (i: number) => i === data.segments.length - 1;
+  const chartData = data.segments.map((seg, i) => ({
     name: seg.name,
     base: seg.type === "total" ? 0 : seg.start,
     visible: seg.type === "total" ? seg.end : Math.abs(seg.value),
@@ -47,12 +51,14 @@ export function WaterfallChart({ data }: WaterfallChartProps) {
     value: seg.value,
     start: seg.start,
     end: seg.end,
+    isLast: isLastIndex(i),
   }));
 
-  function getBarColor(type: string): string {
-    if (type === "gain") return "#22c55e";
-    if (type === "loss") return "#ef4444";
-    return "var(--color-primary)";
+  function getBarColor(entry: typeof chartData[number]): string {
+    if (entry.type === "gain") return "#22c55e";
+    if (entry.type === "loss") return "#ef4444";
+    // total: primeiro = antes (cinza), último = depois (primário)
+    return entry.isLast ? COLOR_AFTER : COLOR_BEFORE;
   }
 
   const diff = data.sim_b.accuracy - data.sim_a.accuracy;
@@ -121,8 +127,36 @@ export function WaterfallChart({ data }: WaterfallChartProps) {
             {/* Visible delta */}
             <Bar dataKey="visible" stackId="waterfall" radius={[4, 4, 0, 0]}>
               {chartData.map((entry, index) => (
-                <Cell key={index} fill={getBarColor(entry.type)} />
+                <Cell key={index} fill={getBarColor(entry)} />
               ))}
+              <LabelList
+                content={({ x, y, width, height, index }) => {
+                  if (index === undefined) return null;
+                  const entry = chartData[index];
+                  if (!entry) return null;
+                  const label = entry.type === "total"
+                    ? `${entry.visible}%`
+                    : `${entry.value >= 0 ? "+" : ""}${entry.value}pp`;
+                  const cx = Number(x) + Number(width) / 2;
+                  const cy = entry.type === "total"
+                    ? Number(y) - 6
+                    : Number(y) + Number(height) / 2;
+                  return (
+                    <text
+                      key={index}
+                      x={cx}
+                      y={cy}
+                      textAnchor="middle"
+                      dominantBaseline={entry.type === "total" ? "auto" : "middle"}
+                      fontSize={11}
+                      fontWeight={entry.type === "total" ? 600 : 400}
+                      fill={entry.type === "total" ? "currentColor" : "#fff"}
+                    >
+                      {label}
+                    </text>
+                  );
+                }}
+              />
             </Bar>
           </BarChart>
         </ChartContainer>
