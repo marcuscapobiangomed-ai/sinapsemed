@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, ImagePlus, Loader2 } from "lucide-react";
+import { Plus, Trash2, ImagePlus, Loader2, ChevronDown } from "lucide-react";
 
 interface Banca {
   id: string;
@@ -35,6 +35,12 @@ interface SpecialtyRow {
   specialty_id: string;
   questions: number;
   correct: number;
+  easy_total: number;
+  easy_correct: number;
+  medium_total: number;
+  medium_correct: number;
+  hard_total: number;
+  hard_correct: number;
 }
 
 export interface SimulationFormData {
@@ -99,6 +105,7 @@ export function AddSimulationDialog({
   const [durationMinutes, setDurationMinutes] = useState("");
   const [notes, setNotes] = useState("");
   const [specialtyRows, setSpecialtyRows] = useState<SpecialtyRow[]>([]);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [easyTotal, setEasyTotal] = useState("");
@@ -125,6 +132,14 @@ export function AddSimulationDialog({
       setNotes(initialData.notes ?? "");
       setSpecialtyRows(initialData.specialty_results);
       setShowBreakdown(initialData.specialty_results.length > 0);
+      // Auto-expand rows that already have difficulty data
+      const autoExpanded = new Set<number>();
+      initialData.specialty_results.forEach((row, i) => {
+        if ((row.easy_total ?? 0) > 0 || (row.medium_total ?? 0) > 0 || (row.hard_total ?? 0) > 0) {
+          autoExpanded.add(i);
+        }
+      });
+      setExpandedRows(autoExpanded);
       const hasDiff = initialData.easy_total > 0 || initialData.medium_total > 0 || initialData.hard_total > 0;
       setShowDifficulty(hasDiff);
       setEasyTotal(initialData.easy_total ? String(initialData.easy_total) : "");
@@ -150,6 +165,7 @@ export function AddSimulationDialog({
     setDurationMinutes("");
     setNotes("");
     setSpecialtyRows([]);
+    setExpandedRows(new Set());
     setShowBreakdown(false);
     setShowDifficulty(false);
     setEasyTotal("");
@@ -164,8 +180,17 @@ export function AddSimulationDialog({
   function addSpecialtyRow() {
     setSpecialtyRows((prev) => [
       ...prev,
-      { specialty_id: "", questions: 0, correct: 0 },
+      { specialty_id: "", questions: 0, correct: 0, easy_total: 0, easy_correct: 0, medium_total: 0, medium_correct: 0, hard_total: 0, hard_correct: 0 },
     ]);
+  }
+
+  function toggleExpandRow(index: number) {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
   }
 
   function updateSpecialtyRow(index: number, field: keyof SpecialtyRow, value: string | number) {
@@ -176,6 +201,14 @@ export function AddSimulationDialog({
 
   function removeSpecialtyRow(index: number) {
     setSpecialtyRows((prev) => prev.filter((_, i) => i !== index));
+    setExpandedRows((prev) => {
+      const next = new Set<number>();
+      for (const idx of prev) {
+        if (idx < index) next.add(idx);
+        else if (idx > index) next.add(idx - 1);
+      }
+      return next;
+    });
   }
 
   const usedSpecialtyIds = new Set(specialtyRows.map((r) => r.specialty_id));
@@ -215,6 +248,12 @@ export function AddSimulationDialog({
             specialty_id: match.id,
             questions: s.questions,
             correct: s.correct,
+            easy_total: 0,
+            easy_correct: 0,
+            medium_total: 0,
+            medium_correct: 0,
+            hard_total: 0,
+            hard_correct: 0,
           });
         }
       }
@@ -631,63 +670,100 @@ export function AddSimulationDialog({
             {showBreakdown && (
               <div className="space-y-2 rounded-lg border p-3">
                 {specialtyRows.map((row, i) => (
-                  <div key={i} className="flex items-end gap-2">
-                    <div className="flex-1">
-                      {i === 0 && (
-                        <Label className="text-xs text-muted-foreground">Especialidade</Label>
-                      )}
-                      <Select
-                        value={row.specialty_id}
-                        onValueChange={(v) => updateSpecialtyRow(i, "specialty_id", v)}
+                  <div key={i} className="space-y-1">
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1">
+                        {i === 0 && (
+                          <Label className="text-xs text-muted-foreground">Especialidade</Label>
+                        )}
+                        <Select
+                          value={row.specialty_id}
+                          onValueChange={(v) => updateSpecialtyRow(i, "specialty_id", v)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {specialties
+                              .filter((s) => !usedSpecialtyIds.has(s.id) || s.id === row.specialty_id)
+                              .map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  {s.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="w-20">
+                        {i === 0 && (
+                          <Label className="text-xs text-muted-foreground">Questões</Label>
+                        )}
+                        <Input
+                          type="number"
+                          min={1}
+                          className="h-9"
+                          value={row.questions || ""}
+                          onChange={(e) => updateSpecialtyRow(i, "questions", Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="w-20">
+                        {i === 0 && (
+                          <Label className="text-xs text-muted-foreground">Acertos</Label>
+                        )}
+                        <Input
+                          type="number"
+                          min={0}
+                          max={row.questions}
+                          className="h-9"
+                          value={row.correct || ""}
+                          onChange={(e) => updateSpecialtyRow(i, "correct", Number(e.target.value))}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        title={expandedRows.has(i) ? "Ocultar dificuldade" : "Detalhar por dificuldade"}
+                        onClick={() => toggleExpandRow(i)}
                       >
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {specialties
-                            .filter((s) => !usedSpecialtyIds.has(s.id) || s.id === row.specialty_id)
-                            .map((s) => (
-                              <SelectItem key={s.id} value={s.id}>
-                                {s.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedRows.has(i) ? "rotate-180" : ""}`} />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={() => removeSpecialtyRow(i)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
-                    <div className="w-20">
-                      {i === 0 && (
-                        <Label className="text-xs text-muted-foreground">Questões</Label>
-                      )}
-                      <Input
-                        type="number"
-                        min={1}
-                        className="h-9"
-                        value={row.questions || ""}
-                        onChange={(e) => updateSpecialtyRow(i, "questions", Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="w-20">
-                      {i === 0 && (
-                        <Label className="text-xs text-muted-foreground">Acertos</Label>
-                      )}
-                      <Input
-                        type="number"
-                        min={0}
-                        max={row.questions}
-                        className="h-9"
-                        value={row.correct || ""}
-                        onChange={(e) => updateSpecialtyRow(i, "correct", Number(e.target.value))}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 shrink-0"
-                      onClick={() => removeSpecialtyRow(i)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    {expandedRows.has(i) && (
+                      <div className="grid grid-cols-3 gap-2 px-1 pt-2 pb-1 border-t">
+                        <div className="space-y-1">
+                          <span className="text-xs font-medium text-green-600">Fácil</span>
+                          <div className="flex gap-1">
+                            <Input type="number" min={0} className="h-8" placeholder="Q" value={row.easy_total || ""} onChange={(e) => updateSpecialtyRow(i, "easy_total", Number(e.target.value))} />
+                            <Input type="number" min={0} className="h-8" placeholder="C" value={row.easy_correct || ""} onChange={(e) => updateSpecialtyRow(i, "easy_correct", Number(e.target.value))} />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-xs font-medium text-amber-600">Média</span>
+                          <div className="flex gap-1">
+                            <Input type="number" min={0} className="h-8" placeholder="Q" value={row.medium_total || ""} onChange={(e) => updateSpecialtyRow(i, "medium_total", Number(e.target.value))} />
+                            <Input type="number" min={0} className="h-8" placeholder="C" value={row.medium_correct || ""} onChange={(e) => updateSpecialtyRow(i, "medium_correct", Number(e.target.value))} />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-xs font-medium text-red-600">Difícil</span>
+                          <div className="flex gap-1">
+                            <Input type="number" min={0} className="h-8" placeholder="Q" value={row.hard_total || ""} onChange={(e) => updateSpecialtyRow(i, "hard_total", Number(e.target.value))} />
+                            <Input type="number" min={0} className="h-8" placeholder="C" value={row.hard_correct || ""} onChange={(e) => updateSpecialtyRow(i, "hard_correct", Number(e.target.value))} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
 

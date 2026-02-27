@@ -77,25 +77,21 @@ export async function getComplexityAggregated(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<ComplexityAreaPoint[]> {
-  // 1. Simulados com dados de dificuldade
+  // 1. Todos os simulados do usuário
   const { data: allSims } = await supabase
     .from("simulations")
     .select("id, easy_total, easy_correct, medium_total, medium_correct, hard_total, hard_correct")
     .eq("user_id", userId);
 
-  const simsWithDiff = (allSims ?? []).filter(
-    (s) => (s.easy_total + s.medium_total + s.hard_total) > 0,
-  );
+  if (!allSims?.length) return [];
 
-  if (!simsWithDiff.length) return [];
+  const simIds = allSims.map((s) => s.id);
 
-  const simIds = simsWithDiff.map((s) => s.id);
-
-  // 2. Resultados por especialidade + hierarquia
+  // 2. Resultados por especialidade (com dificuldade por especialidade) + hierarquia
   const [{ data: results }, { data: specialties }] = await Promise.all([
     supabase
       .from("simulation_results")
-      .select("simulation_id, specialties(slug, parent_id)")
+      .select("simulation_id, easy_total, easy_correct, medium_total, medium_correct, hard_total, hard_correct, specialties(slug, parent_id)")
       .in("simulation_id", simIds),
     supabase.from("specialties").select("id, slug, parent_id"),
   ]);
@@ -111,7 +107,72 @@ export async function getComplexityAggregated(
     return null;
   }
 
-  // 4. Mapa simulado → grandes áreas que cobre
+  // 4a. Resultados com dificuldade por especialidade (nova abordagem)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const resultsWithDiff = ((results ?? []) as any[]).filter(
+    (r) => (r.easy_total + r.medium_total + r.hard_total) > 0,
+  );
+
+  if (resultsWithDiff.length > 0) {
+    // Agregação precisa: soma dificuldade por grande área
+    type AreaStats = {
+      easy_total: number; easy_correct: number;
+      medium_total: number; medium_correct: number;
+      hard_total: number; hard_correct: number;
+      sim_ids: Set<string>;
+    };
+
+    const allStats: AreaStats = { easy_total: 0, easy_correct: 0, medium_total: 0, medium_correct: 0, hard_total: 0, hard_correct: 0, sim_ids: new Set() };
+    const areaStatsMap = new Map<string, AreaStats>();
+
+    for (const r of resultsWithDiff) {
+      allStats.easy_total   += r.easy_total;
+      allStats.easy_correct += r.easy_correct;
+      allStats.medium_total   += r.medium_total;
+      allStats.medium_correct += r.medium_correct;
+      allStats.hard_total   += r.hard_total;
+      allStats.hard_correct += r.hard_correct;
+      allStats.sim_ids.add(r.simulation_id);
+
+      const slug = r.specialties?.slug;
+      if (!slug) continue;
+      const areaSlug = getTopArea(slug);
+      if (!areaSlug) continue;
+
+      if (!areaStatsMap.has(areaSlug)) {
+        areaStatsMap.set(areaSlug, { easy_total: 0, easy_correct: 0, medium_total: 0, medium_correct: 0, hard_total: 0, hard_correct: 0, sim_ids: new Set() });
+      }
+      const s = areaStatsMap.get(areaSlug)!;
+      s.easy_total   += r.easy_total;
+      s.easy_correct += r.easy_correct;
+      s.medium_total   += r.medium_total;
+      s.medium_correct += r.medium_correct;
+      s.hard_total   += r.hard_total;
+      s.hard_correct += r.hard_correct;
+      s.sim_ids.add(r.simulation_id);
+    }
+
+    const points: ComplexityAreaPoint[] = [
+      { area_slug: "all", area_name: "Todas", easy_total: allStats.easy_total, easy_correct: allStats.easy_correct, medium_total: allStats.medium_total, medium_correct: allStats.medium_correct, hard_total: allStats.hard_total, hard_correct: allStats.hard_correct, sim_count: allStats.sim_ids.size },
+    ];
+
+    for (const [areaSlug, areaName] of Object.entries(COMPLEXITY_AREA_LABELS)) {
+      const s = areaStatsMap.get(areaSlug);
+      if (!s) continue;
+      points.push({ area_slug: areaSlug, area_name: areaName, easy_total: s.easy_total, easy_correct: s.easy_correct, medium_total: s.medium_total, medium_correct: s.medium_correct, hard_total: s.hard_total, hard_correct: s.hard_correct, sim_count: s.sim_ids.size });
+    }
+
+    return points;
+  }
+
+  // 4b. Fallback: dificuldade no nível do simulado (dados antigos)
+  const simsWithDiff = allSims.filter(
+    (s) => (s.easy_total + s.medium_total + s.hard_total) > 0,
+  );
+
+  if (!simsWithDiff.length) return [];
+
+  // Mapa simulado → grandes áreas que cobre
   const simToAreas = new Map<string, Set<string>>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const r of (results ?? []) as any[]) {
@@ -123,8 +184,7 @@ export async function getComplexityAggregated(
     simToAreas.get(r.simulation_id)!.add(areaSlug);
   }
 
-  // 5. Helper de agregação
-  function agg(sims: typeof simsWithDiff) {
+  function aggSims(sims: typeof simsWithDiff) {
     return {
       easy_total:     sims.reduce((s, x) => s + x.easy_total, 0),
       easy_correct:   sims.reduce((s, x) => s + x.easy_correct, 0),
@@ -136,13 +196,13 @@ export async function getComplexityAggregated(
   }
 
   const points: ComplexityAreaPoint[] = [
-    { area_slug: "all", area_name: "Todas", ...agg(simsWithDiff), sim_count: simsWithDiff.length },
+    { area_slug: "all", area_name: "Todas", ...aggSims(simsWithDiff), sim_count: simsWithDiff.length },
   ];
 
   for (const [areaSlug, areaName] of Object.entries(COMPLEXITY_AREA_LABELS)) {
     const filtered = simsWithDiff.filter((s) => simToAreas.get(s.id)?.has(areaSlug));
     if (filtered.length === 0) continue;
-    points.push({ area_slug: areaSlug, area_name: areaName, ...agg(filtered), sim_count: filtered.length });
+    points.push({ area_slug: areaSlug, area_name: areaName, ...aggSims(filtered), sim_count: filtered.length });
   }
 
   return points;

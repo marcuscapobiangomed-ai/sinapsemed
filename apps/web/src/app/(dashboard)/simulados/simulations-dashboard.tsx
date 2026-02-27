@@ -102,6 +102,12 @@ export function SimulationsDashboard({
           specialty_id: r.specialty_id,
           questions: r.questions,
           correct: r.correct,
+          easy_total: r.easy_total,
+          easy_correct: r.easy_correct,
+          medium_total: r.medium_total,
+          medium_correct: r.medium_correct,
+          hard_total: r.hard_total,
+          hard_correct: r.hard_correct,
         })),
       );
     }
@@ -155,7 +161,7 @@ export function SimulationsDashboard({
         .single(),
       supabase
         .from("simulation_results")
-        .select("specialty_id, questions, correct")
+        .select("specialty_id, questions, correct, easy_total, easy_correct, medium_total, medium_correct, hard_total, hard_correct")
         .eq("simulation_id", sim.id),
     ]);
 
@@ -169,7 +175,17 @@ export function SimulationsDashboard({
       correct_answers: sim.correct_answers,
       duration_minutes: sim.duration_minutes,
       notes: sim.notes ?? "",
-      specialty_results: (results ?? []) as { specialty_id: string; questions: number; correct: number }[],
+      specialty_results: (results ?? []).map((r) => ({
+        specialty_id: r.specialty_id,
+        questions: r.questions,
+        correct: r.correct,
+        easy_total: r.easy_total ?? 0,
+        easy_correct: r.easy_correct ?? 0,
+        medium_total: r.medium_total ?? 0,
+        medium_correct: r.medium_correct ?? 0,
+        hard_total: r.hard_total ?? 0,
+        hard_correct: r.hard_correct ?? 0,
+      })),
       easy_total: fullSim?.easy_total ?? 0,
       easy_correct: fullSim?.easy_correct ?? 0,
       medium_total: fullSim?.medium_total ?? 0,
@@ -217,6 +233,12 @@ export function SimulationsDashboard({
             specialty_id: r.specialty_id,
             questions: r.questions,
             correct: r.correct,
+            easy_total: r.easy_total,
+            easy_correct: r.easy_correct,
+            medium_total: r.medium_total,
+            medium_correct: r.medium_correct,
+            hard_total: r.hard_total,
+            hard_correct: r.hard_correct,
           })),
         );
       }
