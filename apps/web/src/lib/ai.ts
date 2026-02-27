@@ -13,7 +13,7 @@ export function getGroq(): OpenAI {
 }
 
 export const GROQ_MODEL = "llama-3.3-70b-versatile";
-export const GROQ_VISION_MODEL = "llama-3.2-90b-vision-preview";
+export const GROQ_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 // OpenAI client — used for embeddings only (lazy init to avoid build-time crash)
 let _openai: OpenAI | undefined;
