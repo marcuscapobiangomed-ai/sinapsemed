@@ -60,6 +60,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (!process.env.GROQ_API_KEY) {
+    console.error("[parse-simulation] GROQ_API_KEY não configurada");
+    return NextResponse.json(
+      { error: "Serviço de IA não configurado. Contate o suporte." },
+      { status: 503 },
+    );
+  }
+
   try {
     const groq = getGroq();
 
