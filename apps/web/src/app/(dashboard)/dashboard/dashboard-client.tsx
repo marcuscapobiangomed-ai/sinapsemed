@@ -20,7 +20,6 @@ import { ApprovalTrendChart } from "../analytics/approval-trend-chart";
 import { ProficiencyRadarChart } from "../analytics/proficiency-radar-chart";
 import { FrictionAlerts } from "../analytics/friction-alerts";
 import { ComplexityChart } from "../analytics/complexity-chart";
-import { WaterfallChart } from "../analytics/waterfall-chart";
 
 // Types
 import type {
@@ -32,7 +31,6 @@ import type {
 import type { ApprovalPrediction } from "@/lib/prediction-queries";
 import type {
   ComplexityAreaPoint,
-  WaterfallData,
   ApprovalTrendData,
   RadarPoint,
   FrictionAlert,
@@ -50,7 +48,6 @@ interface DashboardClientProps {
   deckPerformanceData: DeckPerformanceData[];
   prediction: ApprovalPrediction;
   complexityData: ComplexityAreaPoint[];
-  waterfallData: WaterfallData | null;
   approvalTrendData: ApprovalTrendData;
   radarData: RadarPoint[];
   frictionAlerts: FrictionAlert[];
@@ -68,7 +65,6 @@ export function DashboardClient({
   deckPerformanceData,
   prediction,
   complexityData,
-  waterfallData,
   approvalTrendData,
   radarData,
   frictionAlerts,
@@ -105,7 +101,6 @@ export function DashboardClient({
           </div>
 
           <ComplexityChart data={complexityData} />
-          <WaterfallChart data={waterfallData} />
         </TabsContent>
 
         {/* ── Aba Flashcards ── */}

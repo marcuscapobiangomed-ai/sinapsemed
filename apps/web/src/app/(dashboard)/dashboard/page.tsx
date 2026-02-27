@@ -10,7 +10,6 @@ import {
 import { getApprovalPrediction } from "@/lib/prediction-queries";
 import {
   getComplexityAggregated,
-  getPerformanceWaterfall,
   getApprovalTrendData,
   getRadarData,
   getFrictionAlerts,
@@ -39,7 +38,6 @@ export default async function DashboardPage() {
     deckPerformanceData,
     prediction,
     complexityData,
-    waterfallData,
     approvalTrendData,
     radarData,
     frictionAlerts,
@@ -67,7 +65,6 @@ export default async function DashboardPage() {
     getDeckPerformance(supabase, userId),
     getApprovalPrediction(supabase, userId),
     getComplexityAggregated(supabase, userId),
-    getPerformanceWaterfall(supabase, userId),
     getApprovalTrendData(supabase, userId),
     getRadarData(supabase, userId),
     getFrictionAlerts(supabase, userId),
@@ -89,7 +86,6 @@ export default async function DashboardPage() {
       deckPerformanceData={deckPerformanceData}
       prediction={prediction}
       complexityData={complexityData}
-      waterfallData={waterfallData}
       approvalTrendData={approvalTrendData}
       radarData={radarData}
       frictionAlerts={frictionAlerts}

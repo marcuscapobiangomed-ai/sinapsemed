@@ -10,7 +10,6 @@ import {
   Brain,
   Calendar,
   ClipboardList,
-  Store,
   Settings,
   LogOut,
   Menu,
@@ -44,7 +43,6 @@ const navItems = [
   { href: "/simulados", label: "Simulados", icon: ClipboardList },
   { href: "/gaps", label: "Lacunas", icon: Brain },
   { href: "/planner", label: "Planner", icon: Calendar },
-  { href: "/marketplace", label: "Marketplace", icon: Store },
 ];
 
 /** Shared nav content used in both desktop sidebar and mobile sheet */

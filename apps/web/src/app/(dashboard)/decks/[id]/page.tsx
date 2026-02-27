@@ -8,8 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import { getPlanLimits, getUsageCount, checkFlashcardLimit } from "@/lib/plan-limits";
 import { CreateFlashcardDialog } from "./create-flashcard-dialog";
-import { ExportDeckButton } from "./export-deck-button";
-import { ShareDeckButton } from "./share-deck-button";
 import { FlashcardItem } from "./flashcard-item";
 
 export async function generateMetadata({
@@ -84,8 +82,6 @@ export default async function DeckDetailPage({
           <Badge variant="secondary">
             {deck.card_count} {deck.card_count === 1 ? "card" : "cards"}
           </Badge>
-          <ShareDeckButton deckId={deck.id} isPublic={deck.is_public ?? false} shareCode={deck.share_code ?? null} />
-          <ExportDeckButton deckId={deck.id} cardCount={deck.card_count} />
           <CreateFlashcardDialog
             deckId={deck.id}
             limitReached={!fcLimit.allowed}
