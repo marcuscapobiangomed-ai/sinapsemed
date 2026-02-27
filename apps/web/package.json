@@ -14,6 +14,7 @@
     "clean": "rm -rf .next .turbo"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@dindin/shared": "workspace:*",
     "@radix-ui/react-tabs": "^1.1.13",
     "@react-pdf/renderer": "^4.3.2",
