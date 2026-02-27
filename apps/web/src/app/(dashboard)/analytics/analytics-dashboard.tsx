@@ -6,7 +6,7 @@ import { FrictionAlerts } from "./friction-alerts";
 import { ComplexityChart } from "./complexity-chart";
 import { WaterfallChart } from "./waterfall-chart";
 import type {
-  ComplexityBreakdownPoint,
+  ComplexityAreaPoint,
   WaterfallData,
   ApprovalTrendData,
   RadarPoint,
@@ -14,7 +14,7 @@ import type {
 } from "@/lib/analytics-queries";
 
 interface AnalyticsDashboardProps {
-  complexityData: ComplexityBreakdownPoint[];
+  complexityData: ComplexityAreaPoint[];
   waterfallData: WaterfallData | null;
   approvalTrendData: ApprovalTrendData;
   radarData: RadarPoint[];

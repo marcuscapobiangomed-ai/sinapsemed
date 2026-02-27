@@ -1,65 +1,48 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  type ChartConfig,
-} from "@/components/ui/chart";
+import { useState } from "react";
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "recharts";
+import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layers } from "lucide-react";
-import type { ComplexityBreakdownPoint } from "@/lib/analytics-queries";
+import type { ComplexityAreaPoint } from "@/lib/analytics-queries";
 import { DIFFICULTY_TARGETS } from "@/lib/difficulty-targets";
 
-// Cores quando ACIMA da meta
-const HIT_EASY   = "#86efac"; // verde claro
-const HIT_MEDIUM = "#22c55e"; // verde
-const HIT_HARD   = "#15803d"; // verde escuro
-
-// Cores quando ABAIXO da meta
-const MISS_EASY   = "#fca5a5"; // vermelho claro
-const MISS_MEDIUM = "#f87171"; // vermelho
-const MISS_HARD   = "#dc2626"; // vermelho escuro
+// ── cores ──────────────────────────────────────────
+const HIT_EASY   = "#86efac"; // verde claro — fácil atingido
+const HIT_MED    = "#22c55e"; // verde — média atingido
+const HIT_HARD   = "#15803d"; // verde escuro — difícil atingido
+const MISS_EASY  = "#fca5a5"; // vermelho claro — fácil perdido
+const MISS_MED   = "#f87171"; // vermelho — média perdida
+const MISS_HARD  = "#dc2626"; // vermelho escuro — difícil perdido
+const NO_DATA    = "#e2e8f0"; // cinza — sem dados
 
 const chartConfig = {
-  easy:   { label: "Fácil",   color: HIT_EASY   },
-  medium: { label: "Média",   color: HIT_MEDIUM },
-  hard:   { label: "Difícil", color: HIT_HARD   },
+  pct: { label: "Acerto", color: HIT_MED },
 } satisfies ChartConfig;
 
-function truncateTitle(title: string, maxLen = 14): string {
-  return title.length > maxLen ? title.slice(0, maxLen) + "…" : title;
-}
-
-interface ChartPoint {
-  title: string;
-  fullTitle: string;
-  exam_date: string;
-  easy:   number | null;
-  medium: number | null;
-  hard:   number | null;
-  easyRaw: string;
-  medRaw:  string;
-  hardRaw: string;
-  easyTotal: number;
-  medTotal:  number;
-  hardTotal: number;
+interface BarDatum {
+  level: "Fácil" | "Média" | "Difícil";
+  pct:    number | null; // % de acerto (null = sem dados)
+  total:  number;
+  correct: number;
+  target: number;
+  hitColor:  string;
+  missColor: string;
 }
 
 interface ComplexityChartProps {
-  data: ComplexityBreakdownPoint[];
+  data: ComplexityAreaPoint[];
 }
 
 export function ComplexityChart({ data }: ComplexityChartProps) {
-  const withDifficulty = data.filter((d) => d.has_difficulty_data);
+  const [selectedArea, setSelectedArea] = useState("all");
 
-  if (withDifficulty.length === 0) {
+  if (data.length === 0) {
     return (
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-base font-semibold">
-            Raio-X de Complexidade
-          </CardTitle>
+          <CardTitle className="text-base font-semibold">Raio-X de Complexidade</CardTitle>
           <Layers className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent className="flex items-center justify-center py-10">
@@ -71,75 +54,107 @@ export function ComplexityChart({ data }: ComplexityChartProps) {
     );
   }
 
-  const chartData: ChartPoint[] = withDifficulty.map((d) => {
-    const easyTotal = d.easy_correct + d.easy_incorrect;
-    const medTotal  = d.medium_correct + d.medium_incorrect;
-    const hardTotal = d.hard_correct + d.hard_incorrect;
-    return {
-      title:     truncateTitle(d.title),
-      fullTitle: d.title,
-      exam_date: d.exam_date,
-      easy:   easyTotal > 0 ? Math.round((d.easy_correct   / easyTotal) * 100) : null,
-      medium: medTotal  > 0 ? Math.round((d.medium_correct / medTotal)  * 100) : null,
-      hard:   hardTotal > 0 ? Math.round((d.hard_correct   / hardTotal) * 100) : null,
-      easyRaw: `${d.easy_correct}/${easyTotal}`,
-      medRaw:  `${d.medium_correct}/${medTotal}`,
-      hardRaw: `${d.hard_correct}/${hardTotal}`,
-      easyTotal,
-      medTotal,
-      hardTotal,
-    };
-  });
+  const point = data.find((d) => d.area_slug === selectedArea) ?? data[0];
+
+  const pct = (correct: number, total: number): number | null =>
+    total > 0 ? Math.round((correct / total) * 100) : null;
+
+  const easyPct   = pct(point.easy_correct,   point.easy_total);
+  const medPct    = pct(point.medium_correct,  point.medium_total);
+  const hardPct   = pct(point.hard_correct,    point.hard_total);
+
+  const barData: BarDatum[] = [
+    {
+      level: "Fácil",
+      pct: easyPct,
+      total: point.easy_total,
+      correct: point.easy_correct,
+      target: DIFFICULTY_TARGETS.easy,
+      hitColor:  HIT_EASY,
+      missColor: MISS_EASY,
+    },
+    {
+      level: "Média",
+      pct: medPct,
+      total: point.medium_total,
+      correct: point.medium_correct,
+      target: DIFFICULTY_TARGETS.medium,
+      hitColor:  HIT_MED,
+      missColor: MISS_MED,
+    },
+    {
+      level: "Difícil",
+      pct: hardPct,
+      total: point.hard_total,
+      correct: point.hard_correct,
+      target: DIFFICULTY_TARGETS.hard,
+      hitColor:  HIT_HARD,
+      missColor: MISS_HARD,
+    },
+  ];
+
+  // Recharts precisa de um valor numérico para renderizar a barra;
+  // usamos 0 quando sem dados (cor cinza)
+  const chartData = barData.map((d) => ({ ...d, value: d.pct ?? 0 }));
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div>
-          <CardTitle className="text-base font-semibold">
-            Raio-X de Complexidade
-          </CardTitle>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Metas: Fácil ≥{DIFFICULTY_TARGETS.easy}% · Média ≥{DIFFICULTY_TARGETS.medium}% · Difícil ≥{DIFFICULTY_TARGETS.hard}%
-          </p>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-base font-semibold">Raio-X de Complexidade</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Metas: Fácil ≥{DIFFICULTY_TARGETS.easy}% · Média ≥{DIFFICULTY_TARGETS.medium}% · Difícil ≥{DIFFICULTY_TARGETS.hard}%
+            </p>
+          </div>
+          <Layers className="h-4 w-4 text-muted-foreground shrink-0" />
         </div>
-        <Layers className="h-4 w-4 text-muted-foreground" />
+
+        {/* Seletor de grande área */}
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {data.map((area) => (
+            <button
+              key={area.area_slug}
+              onClick={() => setSelectedArea(area.area_slug)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                selectedArea === area.area_slug
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              {area.area_name}
+              <span className="ml-1 opacity-60">({area.sim_count})</span>
+            </button>
+          ))}
+        </div>
       </CardHeader>
+
       <CardContent>
-        {/* Legenda manual — verde = acima da meta, vermelho = abaixo */}
-        <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
+        {/* Legenda inline */}
+        <div className="flex items-center gap-4 mb-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: HIT_MEDIUM }} />
+            <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: HIT_MED }} />
             Acima da meta
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: MISS_MEDIUM }} />
+            <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: MISS_MED }} />
             Abaixo da meta
           </span>
-          <span className="flex items-center gap-3 ml-auto text-muted-foreground/70">
-            <span>Fácil</span>
-            <span>Média</span>
-            <span>Difícil</span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: NO_DATA }} />
+            Sem dados
           </span>
         </div>
 
-        <ChartContainer config={chartConfig} className="aspect-[2/1] w-full">
-          <BarChart
-            data={chartData}
-            margin={{ left: -20, right: 12 }}
-            barCategoryGap="30%"
-            barGap={3}
-          >
+        <ChartContainer config={chartConfig} className="aspect-[3/2] w-full max-h-[260px]">
+          <BarChart data={chartData} margin={{ left: -20, right: 12, top: 24, bottom: 4 }} barCategoryGap="35%">
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="title"
+              dataKey="level"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
-              interval={0}
-              angle={-25}
-              textAnchor="end"
-              height={55}
-              tick={{ fontSize: 11 }}
+              tickMargin={10}
+              tick={{ fontSize: 13, fontWeight: 500 }}
             />
             <YAxis
               domain={[0, 100]}
@@ -151,69 +166,77 @@ export function ComplexityChart({ data }: ComplexityChartProps) {
             <ChartTooltip
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
-                const d = payload[0]?.payload as ChartPoint;
-                const [y, m, day] = d.exam_date.split("-");
-
-                const rows: { color: string; label: string; value: number; raw: string; target: number }[] = [];
-                if (d.easyTotal > 0 && d.easy !== null)
-                  rows.push({ color: d.easy >= DIFFICULTY_TARGETS.easy ? HIT_EASY : MISS_EASY, label: "Fácil", value: d.easy, raw: d.easyRaw, target: DIFFICULTY_TARGETS.easy });
-                if (d.medTotal > 0 && d.medium !== null)
-                  rows.push({ color: d.medium >= DIFFICULTY_TARGETS.medium ? HIT_MEDIUM : MISS_MEDIUM, label: "Média", value: d.medium, raw: d.medRaw, target: DIFFICULTY_TARGETS.medium });
-                if (d.hardTotal > 0 && d.hard !== null)
-                  rows.push({ color: d.hard >= DIFFICULTY_TARGETS.hard ? HIT_HARD : MISS_HARD, label: "Difícil", value: d.hard, raw: d.hardRaw, target: DIFFICULTY_TARGETS.hard });
-
+                const d = payload[0]?.payload as BarDatum & { value: number };
+                if (d.total === 0) {
+                  return (
+                    <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
+                      <p className="font-medium">{d.level}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Sem questões registradas para este nível
+                      </p>
+                    </div>
+                  );
+                }
+                const hit = d.pct !== null && d.pct >= d.target;
                 return (
-                  <div className="rounded-lg border bg-background p-3 shadow-md text-sm max-w-[230px]">
-                    <p className="font-medium mb-0.5 leading-tight">{d.fullTitle}</p>
-                    <p className="text-xs text-muted-foreground mb-2">{`${day}/${m}/${y}`}</p>
-                    <div className="space-y-1.5 text-xs">
-                      {rows.map((row) => {
-                        const hit = row.value >= row.target;
-                        return (
-                          <div key={row.label} className="flex items-center justify-between gap-3">
-                            <span className="flex items-center gap-1.5">
-                              <span className="inline-block w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: row.color }} />
-                              <span className="text-muted-foreground">{row.label}</span>
-                            </span>
-                            <span className="font-semibold tabular-nums">
-                              {row.value}%{" "}
-                              <span className={hit ? "text-green-600 font-normal" : "text-red-500 font-normal"}>
-                                {hit ? "✓" : `✗ meta ${row.target}%`}
-                              </span>
-                            </span>
-                          </div>
-                        );
-                      })}
+                  <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
+                    <p className="font-medium mb-2">{d.level}</p>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between gap-6">
+                        <span className="text-muted-foreground">Acerto</span>
+                        <span className="font-semibold">{d.pct}% ({d.correct}/{d.total})</span>
+                      </div>
+                      <div className="flex justify-between gap-6">
+                        <span className="text-muted-foreground">Meta</span>
+                        <span>{d.target}%</span>
+                      </div>
+                      <div className="flex justify-between gap-6 pt-1 border-t">
+                        <span className="text-muted-foreground">Status</span>
+                        <span className={hit ? "text-green-600 font-medium" : "text-red-500 font-medium"}>
+                          {hit
+                            ? "✓ Atingida"
+                            : `✗ Faltam ${d.target - (d.pct ?? 0)}pp`}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
               }}
             />
-
-            {/* Barras com Cell para colorir individualmente por meta */}
-            <Bar dataKey="easy" name="easy" radius={[4, 4, 0, 0]} maxBarSize={48}>
+            <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={80}>
               {chartData.map((entry, i) => (
                 <Cell
                   key={i}
-                  fill={entry.easy === null ? "#e2e8f0" : entry.easy >= DIFFICULTY_TARGETS.easy ? HIT_EASY : MISS_EASY}
+                  fill={
+                    entry.total === 0
+                      ? NO_DATA
+                      : entry.pct !== null && entry.pct >= entry.target
+                        ? entry.hitColor
+                        : entry.missColor
+                  }
                 />
               ))}
-            </Bar>
-            <Bar dataKey="medium" name="medium" radius={[4, 4, 0, 0]} maxBarSize={48}>
-              {chartData.map((entry, i) => (
-                <Cell
-                  key={i}
-                  fill={entry.medium === null ? "#e2e8f0" : entry.medium >= DIFFICULTY_TARGETS.medium ? HIT_MEDIUM : MISS_MEDIUM}
-                />
-              ))}
-            </Bar>
-            <Bar dataKey="hard" name="hard" radius={[4, 4, 0, 0]} maxBarSize={48}>
-              {chartData.map((entry, i) => (
-                <Cell
-                  key={i}
-                  fill={entry.hard === null ? "#e2e8f0" : entry.hard >= DIFFICULTY_TARGETS.hard ? HIT_HARD : MISS_HARD}
-                />
-              ))}
+              {/* Rótulo com % acima de cada barra */}
+              <LabelList
+                content={({ x, y, width, index }) => {
+                  if (index === undefined) return null;
+                  const entry = chartData[index];
+                  if (!entry) return null;
+                  const label = entry.total === 0 ? "—" : `${entry.pct}%`;
+                  return (
+                    <text
+                      x={Number(x) + Number(width) / 2}
+                      y={Number(y) - 8}
+                      textAnchor="middle"
+                      fontSize={13}
+                      fontWeight={600}
+                      fill="currentColor"
+                    >
+                      {label}
+                    </text>
+                  );
+                }}
+              />
             </Bar>
           </BarChart>
         </ChartContainer>

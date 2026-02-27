@@ -9,7 +9,7 @@ import {
 } from "@/lib/dashboard-queries";
 import { getApprovalPrediction } from "@/lib/prediction-queries";
 import {
-  getComplexityBreakdown,
+  getComplexityAggregated,
   getPerformanceWaterfall,
   getApprovalTrendData,
   getRadarData,
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
     getCardStateDistribution(supabase, userId),
     getDeckPerformance(supabase, userId),
     getApprovalPrediction(supabase, userId),
-    getComplexityBreakdown(supabase, userId),
+    getComplexityAggregated(supabase, userId),
     getPerformanceWaterfall(supabase, userId),
     getApprovalTrendData(supabase, userId),
     getRadarData(supabase, userId),

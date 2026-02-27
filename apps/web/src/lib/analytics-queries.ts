@@ -5,19 +5,6 @@ import { getAccuracyTrend, type AccuracyTrendPoint } from "./simulation-queries"
 //  Types
 // ══════════════════════════════════════════════
 
-/** Feature 1 — Raio-X de Complexidade */
-export interface ComplexityBreakdownPoint {
-  title: string;
-  exam_date: string;
-  easy_correct: number;
-  easy_incorrect: number;
-  medium_correct: number;
-  medium_incorrect: number;
-  hard_correct: number;
-  hard_incorrect: number;
-  has_difficulty_data: boolean;
-}
-
 /** Feature 2 — Cascata de Desempenho */
 export interface WaterfallSegment {
   name: string;
@@ -60,35 +47,105 @@ export interface FrictionAlert {
 }
 
 // ══════════════════════════════════════════════
-//  Feature 1 — Raio-X de Complexidade
+//  Feature 1 — Raio-X de Complexidade (agregado por grande área)
 // ══════════════════════════════════════════════
 
-export async function getComplexityBreakdown(
+/** Dado agregado de dificuldade para uma grande área (ou "all") */
+export interface ComplexityAreaPoint {
+  area_slug: string;  // "all" | "cirurgia_geral" | ...
+  area_name: string;
+  easy_total: number;
+  easy_correct: number;
+  medium_total: number;
+  medium_correct: number;
+  hard_total: number;
+  hard_correct: number;
+  sim_count: number;  // quantos simulados contribuíram para este agregado
+}
+
+const COMPLEXITY_AREA_LABELS: Record<string, string> = {
+  cirurgia_geral:          "Cirurgia Geral",
+  clinica_medica:          "Clínica Médica",
+  pediatria:               "Pediatria",
+  ginecologia_obstetricia: "Gineco/Obstet",
+  medicina_preventiva:     "Med. Preventiva",
+};
+
+const COMPLEXITY_TOP_AREAS = Object.keys(COMPLEXITY_AREA_LABELS);
+
+export async function getComplexityAggregated(
   supabase: SupabaseClient,
   userId: string,
-): Promise<ComplexityBreakdownPoint[]> {
-  const { data } = await supabase
+): Promise<ComplexityAreaPoint[]> {
+  // 1. Simulados com dados de dificuldade
+  const { data: allSims } = await supabase
     .from("simulations")
-    .select("title, exam_date, easy_total, easy_correct, medium_total, medium_correct, hard_total, hard_correct")
-    .eq("user_id", userId)
-    .order("exam_date", { ascending: true });
+    .select("id, easy_total, easy_correct, medium_total, medium_correct, hard_total, hard_correct")
+    .eq("user_id", userId);
 
-  if (!data) return [];
+  const simsWithDiff = (allSims ?? []).filter(
+    (s) => (s.easy_total + s.medium_total + s.hard_total) > 0,
+  );
 
-  return data.map((s) => {
-    const hasDifficulty = (s.easy_total + s.medium_total + s.hard_total) > 0;
+  if (!simsWithDiff.length) return [];
+
+  const simIds = simsWithDiff.map((s) => s.id);
+
+  // 2. Resultados por especialidade + hierarquia
+  const [{ data: results }, { data: specialties }] = await Promise.all([
+    supabase
+      .from("simulation_results")
+      .select("simulation_id, specialties(slug, parent_id)")
+      .in("simulation_id", simIds),
+    supabase.from("specialties").select("id, slug, parent_id"),
+  ]);
+
+  // 3. Resolve especialidade → grande área (1 ou 2 níveis de hierarquia)
+  function getTopArea(slug: string): string | null {
+    if (COMPLEXITY_TOP_AREAS.includes(slug)) return slug;
+    const spec = specialties?.find((s) => s.slug === slug);
+    if (!spec?.parent_id) return null;
+    const parent = specialties?.find((s) => s.id === spec.parent_id);
+    if (!parent) return null;
+    if (COMPLEXITY_TOP_AREAS.includes(parent.slug)) return parent.slug;
+    return null;
+  }
+
+  // 4. Mapa simulado → grandes áreas que cobre
+  const simToAreas = new Map<string, Set<string>>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const r of (results ?? []) as any[]) {
+    const slug = r.specialties?.slug;
+    if (!slug) continue;
+    const areaSlug = getTopArea(slug);
+    if (!areaSlug) continue;
+    if (!simToAreas.has(r.simulation_id)) simToAreas.set(r.simulation_id, new Set());
+    simToAreas.get(r.simulation_id)!.add(areaSlug);
+  }
+
+  // 5. Helper de agregação
+  function agg(sims: typeof simsWithDiff) {
     return {
-      title: s.title,
-      exam_date: s.exam_date,
-      easy_correct: s.easy_correct,
-      easy_incorrect: Math.max(0, s.easy_total - s.easy_correct),
-      medium_correct: s.medium_correct,
-      medium_incorrect: Math.max(0, s.medium_total - s.medium_correct),
-      hard_correct: s.hard_correct,
-      hard_incorrect: Math.max(0, s.hard_total - s.hard_correct),
-      has_difficulty_data: hasDifficulty,
+      easy_total:     sims.reduce((s, x) => s + x.easy_total, 0),
+      easy_correct:   sims.reduce((s, x) => s + x.easy_correct, 0),
+      medium_total:   sims.reduce((s, x) => s + x.medium_total, 0),
+      medium_correct: sims.reduce((s, x) => s + x.medium_correct, 0),
+      hard_total:     sims.reduce((s, x) => s + x.hard_total, 0),
+      hard_correct:   sims.reduce((s, x) => s + x.hard_correct, 0),
     };
-  });
+  }
+
+  const points: ComplexityAreaPoint[] = [
+    { area_slug: "all", area_name: "Todas", ...agg(simsWithDiff), sim_count: simsWithDiff.length },
+  ];
+
+  for (const [areaSlug, areaName] of Object.entries(COMPLEXITY_AREA_LABELS)) {
+    const filtered = simsWithDiff.filter((s) => simToAreas.get(s.id)?.has(areaSlug));
+    if (filtered.length === 0) continue;
+    points.push({ area_slug: areaSlug, area_name: areaName, ...agg(filtered), sim_count: filtered.length });
+  }
+
+  return points;
 }
 
 // ══════════════════════════════════════════════

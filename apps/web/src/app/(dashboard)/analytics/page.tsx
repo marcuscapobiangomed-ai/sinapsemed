@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
-  getComplexityBreakdown,
+  getComplexityAggregated,
   getPerformanceWaterfall,
   getApprovalTrendData,
   getRadarData,
@@ -24,7 +24,7 @@ export default async function AnalyticsPage() {
 
   const [complexityData, waterfallData, approvalTrendData, radarData, frictionAlerts] =
     await Promise.all([
-      getComplexityBreakdown(supabase, user.id),
+      getComplexityAggregated(supabase, user.id),
       getPerformanceWaterfall(supabase, user.id),
       getApprovalTrendData(supabase, user.id),
       getRadarData(supabase, user.id),

@@ -31,7 +31,7 @@ import type {
 } from "@/lib/dashboard-queries";
 import type { ApprovalPrediction } from "@/lib/prediction-queries";
 import type {
-  ComplexityBreakdownPoint,
+  ComplexityAreaPoint,
   WaterfallData,
   ApprovalTrendData,
   RadarPoint,
@@ -49,7 +49,7 @@ interface DashboardClientProps {
   cardStateData: CardStateData[];
   deckPerformanceData: DeckPerformanceData[];
   prediction: ApprovalPrediction;
-  complexityData: ComplexityBreakdownPoint[];
+  complexityData: ComplexityAreaPoint[];
   waterfallData: WaterfallData | null;
   approvalTrendData: ApprovalTrendData;
   radarData: RadarPoint[];
