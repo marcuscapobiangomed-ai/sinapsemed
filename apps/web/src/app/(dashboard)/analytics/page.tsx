@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   getComplexityAggregated,
-  getPerformanceWaterfall,
   getApprovalTrendData,
   getRadarData,
   getFrictionAlerts,
@@ -22,10 +21,9 @@ export default async function AnalyticsPage() {
 
   if (!user) redirect("/login");
 
-  const [complexityData, waterfallData, approvalTrendData, radarData, frictionAlerts] =
+  const [complexityData, approvalTrendData, radarData, frictionAlerts] =
     await Promise.all([
       getComplexityAggregated(supabase, user.id),
-      getPerformanceWaterfall(supabase, user.id),
       getApprovalTrendData(supabase, user.id),
       getRadarData(supabase, user.id),
       getFrictionAlerts(supabase, user.id),
@@ -34,7 +32,6 @@ export default async function AnalyticsPage() {
   return (
     <AnalyticsDashboard
       complexityData={complexityData}
-      waterfallData={waterfallData}
       approvalTrendData={approvalTrendData}
       radarData={radarData}
       frictionAlerts={frictionAlerts}

@@ -4,10 +4,8 @@ import { ApprovalTrendChart } from "./approval-trend-chart";
 import { ProficiencyRadarChart } from "./proficiency-radar-chart";
 import { FrictionAlerts } from "./friction-alerts";
 import { ComplexityChart } from "./complexity-chart";
-import { WaterfallChart } from "./waterfall-chart";
 import type {
   ComplexityAreaPoint,
-  WaterfallData,
   ApprovalTrendData,
   RadarPoint,
   FrictionAlert,
@@ -15,7 +13,6 @@ import type {
 
 interface AnalyticsDashboardProps {
   complexityData: ComplexityAreaPoint[];
-  waterfallData: WaterfallData | null;
   approvalTrendData: ApprovalTrendData;
   radarData: RadarPoint[];
   frictionAlerts: FrictionAlert[];
@@ -23,7 +20,6 @@ interface AnalyticsDashboardProps {
 
 export function AnalyticsDashboard({
   complexityData,
-  waterfallData,
   approvalTrendData,
   radarData,
   frictionAlerts,
@@ -49,9 +45,6 @@ export function AnalyticsDashboard({
 
       {/* Row 3: Complexity X-Ray — full width */}
       <ComplexityChart data={complexityData} />
-
-      {/* Row 4: Performance Waterfall — full width */}
-      <WaterfallChart data={waterfallData} />
     </div>
   );
 }
