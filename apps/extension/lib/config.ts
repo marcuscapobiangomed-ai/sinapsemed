@@ -1,4 +1,3 @@
-// Web app URL — change to production URL before launch
-// Production: https://sinapsemed.app
+// Web app URL — usa localhost em dev, produção em build
 export const WEB_APP_URL =
-  import.meta.env.VITE_WEB_APP_URL ?? "http://localhost:3000";
+  import.meta.env.VITE_WEB_APP_URL ?? "https://web-henna-chi-21.vercel.app";

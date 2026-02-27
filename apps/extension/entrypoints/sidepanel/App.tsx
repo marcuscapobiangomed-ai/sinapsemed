@@ -336,7 +336,7 @@ export default function App() {
     } catch (err) {
       const raw = err instanceof Error ? err.message : "";
       const msg = raw.includes("fetch")
-        ? "Servidor offline. Inicie o app com `pnpm dev:web`."
+        ? "Erro ao conectar com o servidor. Verifique sua conexão."
         : raw || "Erro ao conectar com a IA";
       setChatError(msg);
       setMessages((prev) =>
