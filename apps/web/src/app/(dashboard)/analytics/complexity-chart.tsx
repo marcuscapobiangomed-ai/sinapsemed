@@ -1,6 +1,6 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Legend, ReferenceLine, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -10,17 +10,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layers } from "lucide-react";
 import type { ComplexityBreakdownPoint } from "@/lib/analytics-queries";
 
+// Três séries: % de acerto por nível de dificuldade
 const chartConfig = {
-  easy_correct: { label: "Fácil ✓", color: "#86efac" },
-  easy_incorrect: { label: "Fácil ✗", color: "#fca5a5" },
-  medium_correct: { label: "Média ✓", color: "#22c55e" },
-  medium_incorrect: { label: "Média ✗", color: "#f87171" },
-  hard_correct: { label: "Difícil ✓", color: "#15803d" },
-  hard_incorrect: { label: "Difícil ✗", color: "#dc2626" },
+  easy: { label: "Fácil", color: "#86efac" },
+  medium: { label: "Média", color: "#22c55e" },
+  hard: { label: "Difícil", color: "#15803d" },
 } satisfies ChartConfig;
 
 function truncateTitle(title: string, maxLen = 14): string {
   return title.length > maxLen ? title.slice(0, maxLen) + "…" : title;
+}
+
+interface ChartPoint {
+  title: string;
+  fullTitle: string;
+  exam_date: string;
+  easy: number | null;
+  medium: number | null;
+  hard: number | null;
+  easyRaw: string;
+  medRaw: string;
+  hardRaw: string;
+  easyTotal: number;
+  medTotal: number;
+  hardTotal: number;
 }
 
 interface ComplexityChartProps {
@@ -48,21 +61,52 @@ export function ComplexityChart({ data }: ComplexityChartProps) {
     );
   }
 
+  // Transforma em % de acerto por nível — o que o gráfico deve responder:
+  // "Estou acertando X% das fáceis, Y% das médias, Z% das difíceis?"
+  const chartData: ChartPoint[] = withDifficulty.map((d) => {
+    const easyTotal = d.easy_correct + d.easy_incorrect;
+    const medTotal = d.medium_correct + d.medium_incorrect;
+    const hardTotal = d.hard_correct + d.hard_incorrect;
+    return {
+      title: truncateTitle(d.title),
+      fullTitle: d.title,
+      exam_date: d.exam_date,
+      easy: easyTotal > 0 ? Math.round((d.easy_correct / easyTotal) * 100) : null,
+      medium: medTotal > 0 ? Math.round((d.medium_correct / medTotal) * 100) : null,
+      hard: hardTotal > 0 ? Math.round((d.hard_correct / hardTotal) * 100) : null,
+      easyRaw: `${d.easy_correct}/${easyTotal}`,
+      medRaw: `${d.medium_correct}/${medTotal}`,
+      hardRaw: `${d.hard_correct}/${hardTotal}`,
+      easyTotal,
+      medTotal,
+      hardTotal,
+    };
+  });
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base font-semibold">
-          Raio-X de Complexidade
-        </CardTitle>
+        <div>
+          <CardTitle className="text-base font-semibold">
+            Raio-X de Complexidade
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            % de acerto por nível de dificuldade
+          </p>
+        </div>
         <Layers className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="aspect-[2/1] w-full">
-          <BarChart data={withDifficulty} margin={{ left: -20, right: 12 }}>
+          <BarChart
+            data={chartData}
+            margin={{ left: -20, right: 12 }}
+            barCategoryGap="30%"
+            barGap={3}
+          >
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="title"
-              tickFormatter={truncateTitle}
               tickLine={false}
               axisLine={false}
               tickMargin={8}
@@ -73,38 +117,61 @@ export function ComplexityChart({ data }: ComplexityChartProps) {
               tick={{ fontSize: 11 }}
             />
             <YAxis
+              domain={[0, 100]}
               tickLine={false}
               axisLine={false}
+              tickFormatter={(v) => `${v}%`}
               tickMargin={4}
+            />
+            {/* Linha de referência em 50% — abaixo disso, está errando mais do que acertando */}
+            <ReferenceLine
+              y={50}
+              stroke="var(--border)"
+              strokeDasharray="4 4"
+              label={{ value: "50%", position: "insideTopRight", fontSize: 10, fill: "var(--muted-foreground)" }}
             />
             <ChartTooltip
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
-                const d = payload[0]?.payload as ComplexityBreakdownPoint;
+                const d = payload[0]?.payload as ChartPoint;
                 const [y, m, day] = d.exam_date.split("-");
-                const dateLabel = `${day}/${m}/${y}`;
                 return (
                   <div className="rounded-lg border bg-background p-3 shadow-md text-sm max-w-[220px]">
-                    <p className="font-medium mb-0.5 leading-tight">{d.title}</p>
-                    <p className="text-xs text-muted-foreground mb-2">{dateLabel}</p>
-                    <div className="space-y-1 text-xs">
-                      {(d.easy_correct + d.easy_incorrect) > 0 && (
-                        <p>
-                          <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: "#86efac" }} />
-                          Fácil: {d.easy_correct}/{d.easy_correct + d.easy_incorrect} ({Math.round(d.easy_correct / (d.easy_correct + d.easy_incorrect) * 100)}%)
-                        </p>
+                    <p className="font-medium mb-0.5 leading-tight">{d.fullTitle}</p>
+                    <p className="text-xs text-muted-foreground mb-2">{`${day}/${m}/${y}`}</p>
+                    <div className="space-y-1.5 text-xs">
+                      {d.easyTotal > 0 && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="flex items-center gap-1.5">
+                            <span className="inline-block w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: "#86efac" }} />
+                            <span className="text-muted-foreground">Fácil</span>
+                          </span>
+                          <span className="font-semibold">
+                            {d.easy}% <span className="font-normal text-muted-foreground">({d.easyRaw})</span>
+                          </span>
+                        </div>
                       )}
-                      {(d.medium_correct + d.medium_incorrect) > 0 && (
-                        <p>
-                          <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: "#22c55e" }} />
-                          Média: {d.medium_correct}/{d.medium_correct + d.medium_incorrect} ({Math.round(d.medium_correct / (d.medium_correct + d.medium_incorrect) * 100)}%)
-                        </p>
+                      {d.medTotal > 0 && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="flex items-center gap-1.5">
+                            <span className="inline-block w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: "#22c55e" }} />
+                            <span className="text-muted-foreground">Média</span>
+                          </span>
+                          <span className="font-semibold">
+                            {d.medium}% <span className="font-normal text-muted-foreground">({d.medRaw})</span>
+                          </span>
+                        </div>
                       )}
-                      {(d.hard_correct + d.hard_incorrect) > 0 && (
-                        <p>
-                          <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: "#15803d" }} />
-                          Difícil: {d.hard_correct}/{d.hard_correct + d.hard_incorrect} ({Math.round(d.hard_correct / (d.hard_correct + d.hard_incorrect) * 100)}%)
-                        </p>
+                      {d.hardTotal > 0 && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="flex items-center gap-1.5">
+                            <span className="inline-block w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: "#15803d" }} />
+                            <span className="text-muted-foreground">Difícil</span>
+                          </span>
+                          <span className="font-semibold">
+                            {d.hard}% <span className="font-normal text-muted-foreground">({d.hardRaw})</span>
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -113,14 +180,11 @@ export function ComplexityChart({ data }: ComplexityChartProps) {
             />
             <Legend
               formatter={(value: string) => chartConfig[value as keyof typeof chartConfig]?.label ?? value}
+              wrapperStyle={{ fontSize: 12 }}
             />
-            {/* Stack: bottom to top — easy, medium, hard; correct then incorrect in each */}
-            <Bar dataKey="easy_correct" stackId="a" fill="#86efac" radius={0} />
-            <Bar dataKey="easy_incorrect" stackId="a" fill="#fca5a5" radius={0} />
-            <Bar dataKey="medium_correct" stackId="a" fill="#22c55e" radius={0} />
-            <Bar dataKey="medium_incorrect" stackId="a" fill="#f87171" radius={0} />
-            <Bar dataKey="hard_correct" stackId="a" fill="#15803d" radius={0} />
-            <Bar dataKey="hard_incorrect" stackId="a" fill="#dc2626" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="easy" name="easy" fill="#86efac" radius={[4, 4, 0, 0]} maxBarSize={48} />
+            <Bar dataKey="medium" name="medium" fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={48} />
+            <Bar dataKey="hard" name="hard" fill="#15803d" radius={[4, 4, 0, 0]} maxBarSize={48} />
           </BarChart>
         </ChartContainer>
       </CardContent>
