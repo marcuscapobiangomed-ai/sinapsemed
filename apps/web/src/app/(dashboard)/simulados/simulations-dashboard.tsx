@@ -64,9 +64,13 @@ export function SimulationsDashboard({
   async function handleAdd(data: SimulationFormData) {
     const supabase = createClient();
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data: sim, error } = await supabase
       .from("simulations")
       .insert({
+        user_id: user.id,
         title: data.title,
         banca_id: data.banca_id,
         source: data.source || null,
