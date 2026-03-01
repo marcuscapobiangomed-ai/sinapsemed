@@ -11,6 +11,7 @@ import {
   Calendar,
   ClipboardList,
   Crosshair,
+  Rocket,
   Settings,
   LogOut,
   Menu,
@@ -46,6 +47,7 @@ const navItems = [
   { href: "/simulados", label: "Simulados", icon: ClipboardList },
   { href: "/gaps", label: "Lacunas", icon: Brain },
   { href: "/planner", label: "Planner", icon: Calendar },
+  { href: "/sprints", label: "Sprint", icon: Rocket },
 ];
 
 /** Shared nav content used in both desktop sidebar and mobile sheet */
@@ -104,6 +106,7 @@ function SidebarContent({
               key={item.href}
               href={item.href}
               onClick={onNavigate}
+              data-tour={`sidebar-${item.href.slice(1)}`}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                 isActive

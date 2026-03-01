@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getWeekPlan } from "@/lib/planner-queries";
 import { getGapAnalysis } from "@/lib/gap-queries";
 import { getStreak } from "@/lib/dashboard-queries";
+import { getActiveSprint } from "@/lib/sprint-queries";
 import { getMondayOfWeek, isToday } from "@/lib/planner-utils";
 import { TodayClient } from "./today-client";
 
@@ -25,11 +26,12 @@ export default async function HojePage() {
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
-  const [weekPlan, gapAnalysis, streak, dueResult, reviewsTodayResult] =
+  const [weekPlan, gapAnalysis, streak, activeSprint, dueResult, reviewsTodayResult] =
     await Promise.all([
       getWeekPlan(supabase, user.id, weekStart),
       getGapAnalysis(supabase, user.id),
       getStreak(supabase, user.id),
+      getActiveSprint(supabase, user.id),
       supabase
         .from("flashcards")
         .select("id", { count: "exact", head: true })
@@ -67,6 +69,7 @@ export default async function HojePage() {
       streak={streak}
       topGaps={gapAnalysis.specialties.slice(0, 3)}
       studyGoalMinutes={Math.round(weekPlan.study_hours_goal * 60)}
+      activeSprint={activeSprint}
     />
   );
 }

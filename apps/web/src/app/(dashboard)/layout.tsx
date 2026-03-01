@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar, MobileHeader } from "@/components/sidebar";
 import { getNotifications } from "@/lib/notifications";
+import { PostHogIdentify } from "@/components/posthog-identify";
+import { OnboardingTour } from "@/components/onboarding-tour";
 
 export default async function DashboardLayout({
   children,
@@ -31,6 +33,8 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
+      <PostHogIdentify userId={user.id} email={profile.email} name={profile.full_name} />
+      <OnboardingTour userId={user.id} showTour={!profile.onboarding_tour_completed} />
       <Sidebar user={userData} notifications={notifications} />
       <div className="flex-1 flex flex-col min-h-0">
         <MobileHeader user={userData} notifications={notifications} />

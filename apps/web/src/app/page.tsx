@@ -162,11 +162,66 @@ const faqs = [
   },
 ];
 
+// ── Structured Data (JSON-LD) ─────────────────────────────────────────────────
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.a,
+    },
+  })),
+};
+
+const softwareJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "SinapseMED",
+  applicationCategory: "EducationalApplication",
+  operatingSystem: "Web",
+  description:
+    "Plataforma de estudo com repetição espaçada e IA preditiva para aprovação em residência médica.",
+  offers: [
+    {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "BRL",
+      name: "Gratuito",
+    },
+    {
+      "@type": "Offer",
+      price: "29.90",
+      priceCurrency: "BRL",
+      name: "Pro",
+      billingIncrement: "P1M",
+    },
+    {
+      "@type": "Offer",
+      price: "59.90",
+      priceCurrency: "BRL",
+      name: "Premium",
+      billingIncrement: "P1M",
+    },
+  ],
+};
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
+      />
       <LandingNav />
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}

@@ -22,6 +22,8 @@ import {
 import { getSpecialtyColor, formatMinutes } from "@/lib/planner-utils";
 import type { PlanEntry } from "@/lib/planner-queries";
 import type { SpecialtyGap } from "@/lib/gap-queries";
+import type { Sprint } from "@/lib/sprint-queries";
+import { getSprintProgress, SPRINT_TYPE_LABELS } from "@/lib/sprint-queries";
 import { ClinicalTriggerDialog } from "./clinical-trigger-dialog";
 
 interface TodayClientProps {
@@ -33,6 +35,7 @@ interface TodayClientProps {
   streak: number;
   topGaps: SpecialtyGap[];
   studyGoalMinutes: number;
+  activeSprint?: Sprint | null;
 }
 
 export function TodayClient({
@@ -44,6 +47,7 @@ export function TodayClient({
   streak,
   topGaps,
   studyGoalMinutes,
+  activeSprint,
 }: TodayClientProps) {
   const router = useRouter();
   const [entries, setEntries] = useState(initialEntries);
@@ -129,6 +133,44 @@ export function TodayClient({
           Sua missão do dia
         </p>
       </div>
+
+      {/* Sprint card */}
+      {activeSprint && (() => {
+        const progress = getSprintProgress(activeSprint);
+        return (
+          <Link href="/sprints" className="block">
+            <Card className="border-primary/30 hover:border-primary/50 transition-colors">
+              <CardContent className="flex items-center gap-4 py-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                  <Zap className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold truncate">{activeSprint.title}</p>
+                    <Badge variant="secondary" className="text-[10px] shrink-0">
+                      Dia {progress.dayNumber}/{progress.totalDays}
+                    </Badge>
+                  </div>
+                  <div className="mt-1.5">
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${progress.progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                  {activeSprint.focus_specialties.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Foco: {activeSprint.focus_specialties.map(f => f.name).join(", ")}
+                    </p>
+                  )}
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+        );
+      })()}
 
       {/* Section A: Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

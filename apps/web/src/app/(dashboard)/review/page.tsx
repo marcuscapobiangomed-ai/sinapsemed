@@ -3,9 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { ReviewSession } from "./review-session";
 import { BancaFilter } from "./banca-filter";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Zap } from "lucide-react";
+import { BookOpen, Zap, Target } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getActiveSprint } from "@/lib/sprint-queries";
+import { get8020Queue } from "@/lib/sprint-80-20";
 
 export const metadata: Metadata = {
   title: "Revisão",
@@ -35,6 +37,12 @@ export default async function ReviewPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Check for active 80/20 sprint
+  const activeSprint = await getActiveSprint(supabase, user!.id);
+  const is8020 =
+    activeSprint?.is_80_20_mode === true ||
+    activeSprint?.sprint_type === "final_80_20";
 
   // Fetch user's bancas for the filter bar
   const { data: userBancas } = await supabase
@@ -67,24 +75,57 @@ export default async function ReviewPage({
   // Fetch due flashcards (new cards + cards due for review)
   const now = new Date().toISOString();
 
-  let query = supabase
-    .from("flashcards")
-    .select("*, decks(title, color)", { count: "exact" })
-    .eq("user_id", user!.id)
-    .eq("is_suspended", false)
-    .or(`next_review_at.is.null,next_review_at.lte.${now}`)
-    .order("next_review_at", { ascending: true, nullsFirst: true })
-    .limit(cardLimit);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let dueCards: any[] | null = null;
+  let count: number | null = null;
+  let using8020 = false;
 
-  if (bancaFilter) {
-    query = query.contains("tags", [bancaFilter]);
+  if (is8020 && !bancaFilter && !specialtyId) {
+    // 80/20 mode: use prioritized queue
+    const queue = await get8020Queue(supabase, user!.id);
+    const ids = queue.map((c) => c.flashcard_id);
+
+    if (ids.length > 0) {
+      const { data, count: c } = await supabase
+        .from("flashcards")
+        .select("*, decks(title, color)", { count: "exact" })
+        .in("id", ids.slice(0, cardLimit));
+
+      if (data && data.length > 0) {
+        // Re-sort by priority order
+        const orderMap = new Map(ids.map((id, i) => [id, i]));
+        dueCards = data.sort(
+          (a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999),
+        );
+        count = c;
+        using8020 = true;
+      }
+    }
   }
 
-  if (specialtyId) {
-    query = query.eq("specialty_id", specialtyId);
-  }
+  // Fallback: standard due-cards query (also used when no 80/20 cards)
+  if (!dueCards) {
+    let query = supabase
+      .from("flashcards")
+      .select("*, decks(title, color)", { count: "exact" })
+      .eq("user_id", user!.id)
+      .eq("is_suspended", false)
+      .or(`next_review_at.is.null,next_review_at.lte.${now}`)
+      .order("next_review_at", { ascending: true, nullsFirst: true })
+      .limit(cardLimit);
 
-  const { data: dueCards, count } = await query;
+    if (bancaFilter) {
+      query = query.contains("tags", [bancaFilter]);
+    }
+
+    if (specialtyId) {
+      query = query.eq("specialty_id", specialtyId);
+    }
+
+    const result = await query;
+    dueCards = result.data;
+    count = result.count;
+  }
 
   // Build subtitle parts
   const subtitleParts: string[] = [];
@@ -145,6 +186,17 @@ export default async function ReviewPage({
 
   return (
     <div className="space-y-6">
+      {using8020 && (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+          <Target className="h-5 w-5 text-primary shrink-0" />
+          <div>
+            <p className="text-sm font-medium">Modo Reta Final 80/20</p>
+            <p className="text-xs text-muted-foreground">
+              Focando nos 20% de conteudo que mais caem na sua banca
+            </p>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Revisão</h1>
