@@ -87,9 +87,6 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      jszip:
-        specifier: ^3.10.1
-        version: 3.10.1
       lucide-react:
         specifier: ^0.480.0
         version: 0.480.0(react@19.2.4)
@@ -117,9 +114,6 @@ importers:
       sonner:
         specifier: ^2
         version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      sql.js:
-        specifier: ^1.14.0
-        version: 1.14.0
       stripe:
         specifier: ^20.3.1
         version: 20.3.1(@types/node@22.19.11)
@@ -5494,9 +5488,6 @@ packages:
 
   split@1.0.1:
     resolution: {integrity: sha512-mTyOoPbrivtXnwnIxZRFYRrPNtEFKlpB2fvjSnCQUiAA6qAZzqwna5envK4uk6OIeP17CsdF3rSBGYVBsU0Tkg==}
-
-  sql.js@1.14.0:
-    resolution: {integrity: sha512-NXYh+kFqLiYRCNAaHD0PcbjFgXyjuolEKLMk5vRt2DgPENtF1kkNzzMlg42dUk5wIsH8MhUzsRhaUxIisoSlZQ==}
 
   stable-hash@0.0.5:
     resolution: {integrity: sha512-+L3ccpzibovGXFK+Ap/f8LOS0ahMrHTf3xu7mMLSpEGU0EO9ucaysSylKo9eRDFNhWve/y275iPmIZ4z39a9iA==}
@@ -12077,8 +12068,6 @@ snapshots:
   split@1.0.1:
     dependencies:
       through: 2.3.8
-
-  sql.js@1.14.0: {}
 
   stable-hash@0.0.5: {}
 
