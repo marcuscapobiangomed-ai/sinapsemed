@@ -271,22 +271,42 @@ export function WeeklyPlanner({ initialPlan, specialties, isPremium }: WeeklyPla
         onGenerateAI={() => setShowAIDialog(true)}
       />
 
-      {/* Desktop: all 7 columns expanded */}
-      <div className="hidden lg:grid lg:grid-cols-7 gap-2">
-        {plan.days.map((day) => (
-          <DayColumn
-            key={day.day_of_week}
-            day={day}
-            weekStart={plan.week_start}
-            studyGoalMinutes={studyGoalMinutes}
-            isToday={isToday(plan.week_start, day.day_of_week)}
-            expanded={true}
-            onExpand={() => {}}
-            onAddBlock={setAddDialogDay}
-            onToggleComplete={handleToggleComplete}
-            onDeleteBlock={handleDeleteBlock}
-          />
-        ))}
+      {/* Desktop: 4+3 grid layout for readability */}
+      <div className="hidden lg:block space-y-3">
+        {/* Row 1: Seg–Qui (4 columns) */}
+        <div className="grid grid-cols-4 gap-3">
+          {plan.days.slice(0, 4).map((day) => (
+            <DayColumn
+              key={day.day_of_week}
+              day={day}
+              weekStart={plan.week_start}
+              studyGoalMinutes={studyGoalMinutes}
+              isToday={isToday(plan.week_start, day.day_of_week)}
+              expanded={true}
+              onExpand={() => {}}
+              onAddBlock={setAddDialogDay}
+              onToggleComplete={handleToggleComplete}
+              onDeleteBlock={handleDeleteBlock}
+            />
+          ))}
+        </div>
+        {/* Row 2: Sex–Dom (3 columns, wider) */}
+        <div className="grid grid-cols-3 gap-3">
+          {plan.days.slice(4).map((day) => (
+            <DayColumn
+              key={day.day_of_week}
+              day={day}
+              weekStart={plan.week_start}
+              studyGoalMinutes={studyGoalMinutes}
+              isToday={isToday(plan.week_start, day.day_of_week)}
+              expanded={true}
+              onExpand={() => {}}
+              onAddBlock={setAddDialogDay}
+              onToggleComplete={handleToggleComplete}
+              onDeleteBlock={handleDeleteBlock}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Mobile/Tablet: today expanded, others compact */}

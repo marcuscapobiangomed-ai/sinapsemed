@@ -140,7 +140,7 @@ export function DayColumn({
       </div>
 
       {/* Blocks */}
-      <div className="flex-1 space-y-1.5">
+      <div className="flex-1 space-y-2">
         {day.entries.map((entry) => (
           <StudyBlock
             key={entry.id}

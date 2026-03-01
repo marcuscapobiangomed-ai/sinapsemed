@@ -39,15 +39,17 @@ export function StudyBlock({ entry, onToggleComplete, onDelete }: StudyBlockProp
           )}
         </button>
 
+        {/* Color bar */}
+        <div
+          className="w-1 self-stretch rounded-full shrink-0"
+          style={{ backgroundColor: color }}
+        />
+
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <span
-              className="h-2.5 w-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: color }}
-            />
-            <span
-              className={`text-sm font-medium truncate ${
+              className={`text-sm font-medium leading-snug ${
                 entry.is_completed ? "line-through text-muted-foreground" : ""
               }`}
             >
