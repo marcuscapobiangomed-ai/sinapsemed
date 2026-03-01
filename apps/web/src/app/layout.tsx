@@ -3,8 +3,7 @@ import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
-import { PostHogProvider } from "@/components/posthog-provider";
-import { PostHogPageview } from "@/components/posthog-pageview";
+import { GoogleAnalytics } from "@/components/google-analytics";
 import "./globals.css";
 
 const inter = Inter({
@@ -59,15 +58,13 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased">
-        <PostHogProvider>
-          <ThemeProvider>
-            <PostHogPageview />
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
-            <Toaster position="top-right" richColors />
-          </ThemeProvider>
-        </PostHogProvider>
+        <ThemeProvider>
+          <GoogleAnalytics />
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
+          <Toaster position="top-right" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );
