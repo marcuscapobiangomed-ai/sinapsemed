@@ -35,7 +35,7 @@ export default function TermosPage() {
 
         <Section title="1. Aceitação dos Termos">
           <p>
-            Ao acessar ou usar a plataforma SinapseMED ("Serviço"), você concorda com estes Termos de Uso.
+            Ao acessar ou usar a plataforma SinapseMED (&ldquo;Serviço&rdquo;), você concorda com estes Termos de Uso.
             Se você não concorda com algum destes termos, não deve usar o Serviço.
             O Serviço é operado por SinapseMED e é destinado a estudantes que se preparam para concursos
             de residência médica no Brasil.
@@ -92,7 +92,7 @@ export default function TermosPage() {
 
         <Section title="7. Limitação de Responsabilidade">
           <p>
-            O Serviço é fornecido "como está". A SinapseMED não garante aprovação em concursos e não se responsabiliza
+            O Serviço é fornecido &ldquo;como está&rdquo;. A SinapseMED não garante aprovação em concursos e não se responsabiliza
             por interrupções, erros ou perda de dados. Em nenhuma hipótese nossa responsabilidade excederá o valor
             pago pelo Serviço nos últimos 3 meses.
           </p>

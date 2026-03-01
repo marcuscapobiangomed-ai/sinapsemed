@@ -31,10 +31,10 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 const RATING_DISPLAY = [
-  { key: "again" as const, label: "De novo", color: "#ef4444", icon: RotateCcw },
-  { key: "hard" as const, label: "Difícil", color: "#f97316", icon: AlertCircle },
-  { key: "good" as const, label: "Bom", color: "#22c55e", icon: Check },
-  { key: "easy" as const, label: "Fácil", color: "#3b82f6", icon: Zap },
+  { key: "again" as const, label: "De novo", color: "#E57373", icon: RotateCcw },
+  { key: "hard" as const, label: "Difícil", color: "#FFB74D", icon: AlertCircle },
+  { key: "good" as const, label: "Bom", color: "#81C784", icon: Check },
+  { key: "easy" as const, label: "Fácil", color: "#64B5F6", icon: Zap },
 ];
 
 function formatDuration(ms: number): string {
@@ -57,8 +57,8 @@ export function SessionSummary({
   const avgTimeMs = reviewed > 0 ? sessionDurationMs / reviewed : 0;
 
   const donutData = [
-    { name: "Corretos", value: correctCount, color: "#22c55e" },
-    { name: "Errados", value: incorrectCount, color: "#ef4444" },
+    { name: "Corretos", value: correctCount, color: "#81C784" },
+    { name: "Errados", value: incorrectCount, color: "#E57373" },
   ];
 
   const maxRatingCount = Math.max(

@@ -88,33 +88,33 @@ export function shiftWeek(weekStart: string, weeks: number): string {
   return formatDate(d);
 }
 
-/** Mapa padronizado de cores por especialidade médica */
+/** Mapa padronizado de cores pastel por especialidade médica */
 const SPECIALTY_COLOR_MAP: Record<string, string> = {
-  cardiologia:            "#DC2626", // Vermelho — coração
-  clinica_medica:         "#2563EB", // Azul — medicina interna
-  cirurgia_geral:         "#0D9488", // Teal — bisturi/aço
-  pediatria:              "#65A30D", // Verde-lima — crescimento
-  ginecologia_obstetricia:"#EC4899", // Rosa — feminino
-  medicina_preventiva:    "#059669", // Esmeralda — saúde pública
-  saude_mental:           "#7C3AED", // Roxo — mente
-  emergencia:             "#EA580C", // Laranja — urgência
-  ortopedia:              "#64748B", // Cinza-aço — ossos
-  endocrinologia:         "#D97706", // Âmbar — metabolismo
-  gastroenterologia:      "#F97316", // Laranja-escuro — TGI
-  nefrologia:             "#0EA5E9", // Azul-céu — rim/água
-  pneumologia:            "#38BDF8", // Azul-claro — pulmão/ar
-  neurologia:             "#4F46E5", // Índigo — cérebro
-  infectologia:           "#84CC16", // Verde-limão — micro
-  dermatologia:           "#F472B6", // Rosa-claro — pele
-  oftalmologia:           "#06B6D4", // Ciano — olho
-  otorrinolaringologia:   "#A78BFA", // Lilás
-  urologia:               "#14B8A6", // Teal-claro
-  farmacologia:           "#E11D48", // Rosa-vermelho — fármaco
+  cardiologia:            "#FFA9BA", // Rosa suave — coração
+  clinica_medica:         "#93B5E0", // Azul pastel — medicina interna
+  cirurgia_geral:         "#7EC8C8", // Teal pastel — bisturi
+  pediatria:              "#A9CDA7", // Verde pastel — crescimento
+  ginecologia_obstetricia:"#F0B4C8", // Rosa claro — feminino
+  medicina_preventiva:    "#C6D8AF", // Verde-sage — saúde pública
+  saude_mental:           "#CBBEE2", // Lavanda — mente
+  emergencia:             "#F5C49C", // Pêssego — urgência
+  ortopedia:              "#B0BEC5", // Cinza-azulado — ossos
+  endocrinologia:         "#F5D89A", // Âmbar claro — metabolismo
+  gastroenterologia:      "#F5B895", // Salmão — TGI
+  nefrologia:             "#95CCE8", // Azul-céu pastel — rim
+  pneumologia:            "#A8D8EA", // Azul-claro — pulmão
+  neurologia:             "#A3A8D8", // Índigo pastel — cérebro
+  infectologia:           "#C5E1A5", // Verde-limão pastel — micro
+  dermatologia:           "#F8BBD0", // Rosa-pétala — pele
+  oftalmologia:           "#80DEEA", // Ciano pastel — olho
+  otorrinolaringologia:   "#C5B3E3", // Lilás pastel
+  urologia:               "#80CBC4", // Teal pastel claro
+  farmacologia:           "#EF9A9A", // Rosa-salmão — fármaco
 };
 
 const FALLBACK_COLORS = [
-  "#EF4444", "#F97316", "#EAB308", "#22C55E", "#3B82F6",
-  "#6366F1", "#A855F7", "#EC4899", "#0EA5E9", "#10B981",
+  "#F8BBD0", "#FFCCBC", "#FFF9C4", "#C8E6C9", "#BBDEFB",
+  "#C5CAE9", "#E1BEE7", "#F0B4C8", "#B2EBF2", "#A5D6A7",
 ];
 
 export function getSpecialtyColor(slug: string): string {

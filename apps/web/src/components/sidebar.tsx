@@ -24,6 +24,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { NotificationBell } from "@/components/notification-bell";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import type { AppNotification } from "@/lib/notifications";
@@ -84,15 +85,15 @@ function SidebarContent({
           className="flex items-center gap-2.5 group"
           onClick={onNavigate}
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary transition-transform group-hover:scale-105">
-            <Brain className="h-4 w-4 text-primary-foreground" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 transition-transform group-hover:scale-105">
+            <Brain className="h-4 w-4 text-white" />
           </div>
-          <span className="text-lg font-bold tracking-tight">SinapseMED</span>
+          <span className="text-lg font-bold tracking-tight text-sidebar-foreground">SinapseMED</span>
         </Link>
         <NotificationBell notifications={notifications} />
       </div>
 
-      <Separator />
+      <Separator className="bg-white/10" />
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5 p-3">
@@ -106,18 +107,18 @@ function SidebarContent({
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                 isActive
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  ? "bg-white/10 text-white font-semibold border-l-2 border-white"
+                  : "text-sidebar-foreground/70 hover:bg-white/5 hover:text-sidebar-foreground",
               )}
             >
-              <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "")} />
+              <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "")} />
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      <Separator />
+      <Separator className="bg-white/10" />
 
       {/* User section */}
       <div className="p-3 space-y-2">
@@ -127,28 +128,29 @@ function SidebarContent({
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
             pathname === "/settings"
-              ? "bg-primary/10 text-primary font-semibold"
-              : "text-muted-foreground hover:bg-accent hover:text-foreground",
+              ? "bg-white/10 text-white font-semibold border-l-2 border-white"
+              : "text-sidebar-foreground/70 hover:bg-white/5 hover:text-sidebar-foreground",
           )}
         >
-          <Settings className={cn("h-4 w-4 shrink-0", pathname === "/settings" ? "text-primary" : "")} />
+          <Settings className={cn("h-4 w-4 shrink-0", pathname === "/settings" ? "text-white" : "")} />
           Configurações
         </Link>
 
         <div className="flex items-center gap-3 rounded-lg px-3 py-2">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.avatarUrl || undefined} />
-            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            <AvatarFallback className="text-xs bg-white/15 text-sidebar-foreground">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            <p className="text-sm font-medium truncate text-sidebar-foreground">{user.name}</p>
+            <p className="text-xs text-sidebar-foreground/60 truncate">{user.email}</p>
           </div>
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLogout}
-            className="h-8 w-8 shrink-0"
+            className="h-8 w-8 shrink-0 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-white/5"
           >
             <LogOut className="h-4 w-4" />
           </Button>
@@ -163,7 +165,7 @@ export function Sidebar({ user, notifications = [] }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex w-64 flex-col border-r bg-card">
+    <aside className="hidden lg:flex w-64 flex-col border-r bg-sidebar text-sidebar-foreground">
       <SidebarContent user={user} pathname={pathname} notifications={notifications} />
     </aside>
   );
@@ -204,7 +206,7 @@ export function MobileHeader({ user, notifications = [] }: SidebarProps) {
 
       {/* Sheet drawer */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-64 p-0" showCloseButton={false}>
+        <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground border-sidebar-border" showCloseButton={false}>
           <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
           <div className="flex flex-col h-full">
             <SidebarContent

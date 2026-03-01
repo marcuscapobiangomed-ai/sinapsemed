@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,8 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sun, Moon, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface Banca {
   id: string;
@@ -75,6 +78,10 @@ export function SettingsForm({
   const [primaryBanca, setPrimaryBanca] = useState<string>(
     currentUserBancas.find((ub) => ub.is_primary)?.banca_id ?? "",
   );
+
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const currentYear = new Date().getFullYear();
 
@@ -185,6 +192,40 @@ export function SettingsForm({
 
   return (
     <div className="space-y-6">
+      {/* Appearance Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Aparência</CardTitle>
+          <CardDescription>Escolha o tema visual da plataforma</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {mounted && (
+            <div className="flex gap-3">
+              {[
+                { value: "light", label: "Claro", icon: Sun },
+                { value: "dark", label: "Escuro", icon: Moon },
+                { value: "system", label: "Sistema", icon: Monitor },
+              ].map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setTheme(value)}
+                  className={cn(
+                    "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all flex-1",
+                    theme === value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/30",
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-sm font-medium">{label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Profile Section */}
       <Card>
         <CardHeader>
