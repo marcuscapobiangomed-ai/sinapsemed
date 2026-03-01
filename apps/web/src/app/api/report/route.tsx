@@ -30,13 +30,13 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 20,
-    borderBottom: "2 solid #3B82F6",
+    borderBottom: "2 solid #0047AB",
     paddingBottom: 12,
   },
   title: {
     fontSize: 22,
     fontFamily: "Helvetica-Bold",
-    color: "#3B82F6",
+    color: "#0047AB",
   },
   subtitle: {
     fontSize: 10,
@@ -152,7 +152,7 @@ interface ReportData {
 
 function MonthlyReport({ data }: { data: ReportData }) {
   const accuracyColor = (acc: number) =>
-    acc >= 70 ? "#22c55e" : acc >= 50 ? "#f59e0b" : "#ef4444";
+    acc >= 70 ? "#228B22" : acc >= 50 ? "#E5C287" : "#E57373";
 
   return (
     <Document>
@@ -215,7 +215,7 @@ function MonthlyReport({ data }: { data: ReportData }) {
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>Tendência</Text>
               <Text style={[styles.statValue, {
-                color: data.simStats.trend > 0 ? "#22c55e" : data.simStats.trend < 0 ? "#ef4444" : "#666",
+                color: data.simStats.trend > 0 ? "#228B22" : data.simStats.trend < 0 ? "#E57373" : "#666",
               }]}>
                 {data.simStats.trend > 0 ? "+" : ""}{data.simStats.trend}pp
               </Text>

@@ -88,23 +88,23 @@ export function ApprovalTrendChart({ data }: ApprovalTrendChartProps) {
                 <ReferenceArea
                   y1={0}
                   y2={60}
-                  fill="rgba(239, 68, 68, 0.05)"
+                  fill="rgba(229, 115, 115, 0.06)"
                   fillOpacity={1}
-                  label={{ value: "Risco", position: "insideBottomLeft", fill: "#ef444480", fontSize: 11 }}
+                  label={{ value: "Risco", position: "insideBottomLeft", fill: "#E5737380", fontSize: 11 }}
                 />
                 <ReferenceArea
                   y1={60}
                   y2={cutoff}
-                  fill="rgba(245, 158, 11, 0.05)"
+                  fill="rgba(229, 194, 135, 0.06)"
                   fillOpacity={1}
-                  label={{ value: "Competição", position: "insideBottomLeft", fill: "#f59e0b80", fontSize: 11 }}
+                  label={{ value: "Competição", position: "insideBottomLeft", fill: "#E5C28780", fontSize: 11 }}
                 />
                 <ReferenceArea
                   y1={cutoff}
                   y2={100}
-                  fill="rgba(34, 197, 94, 0.05)"
+                  fill="rgba(129, 199, 132, 0.06)"
                   fillOpacity={1}
-                  label={{ value: "Aprovação", position: "insideTopLeft", fill: "#22c55e80", fontSize: 11 }}
+                  label={{ value: "Aprovação", position: "insideTopLeft", fill: "#81C78480", fontSize: 11 }}
                 />
               </>
             )}
@@ -128,7 +128,7 @@ export function ApprovalTrendChart({ data }: ApprovalTrendChartProps) {
             {hasBanca && (
               <ReferenceLine
                 y={cutoff}
-                stroke="#ef4444"
+                stroke="#E57373"
                 strokeDasharray="5 5"
                 strokeWidth={1.5}
               />

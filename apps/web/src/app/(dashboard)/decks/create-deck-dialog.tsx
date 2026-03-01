@@ -18,8 +18,8 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 
 const DECK_COLORS = [
-  "#3B82F6", "#8B5CF6", "#EC4899", "#EF4444",
-  "#F59E0B", "#22C55E", "#06B6D4", "#6366F1",
+  "#0047AB", "#6183D0", "#81C784", "#E5C287",
+  "#E57373", "#64B5F6", "#CBBEE2", "#7EC8C8",
 ];
 
 export function CreateDeckDialog() {

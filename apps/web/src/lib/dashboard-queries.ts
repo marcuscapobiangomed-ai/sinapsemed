@@ -243,7 +243,7 @@ export async function getDeckPerformance(
       return {
         deckId,
         title: deck.title,
-        color: deck.color ?? "#3b82f6",
+        color: deck.color ?? "#0047AB",
         accuracy: Math.round((correct / total) * 100),
         totalReviews: total,
       };

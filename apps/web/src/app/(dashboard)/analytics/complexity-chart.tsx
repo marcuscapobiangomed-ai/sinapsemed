@@ -8,14 +8,14 @@ import { Layers } from "lucide-react";
 import type { ComplexityAreaPoint } from "@/lib/analytics-queries";
 import { DIFFICULTY_TARGETS } from "@/lib/difficulty-targets";
 
-// ── cores ──────────────────────────────────────────
-const HIT_EASY   = "#86efac"; // verde claro — fácil atingido
-const HIT_MED    = "#22c55e"; // verde — média atingido
-const HIT_HARD   = "#15803d"; // verde escuro — difícil atingido
-const MISS_EASY  = "#fca5a5"; // vermelho claro — fácil perdido
-const MISS_MED   = "#f87171"; // vermelho — média perdida
-const MISS_HARD  = "#dc2626"; // vermelho escuro — difícil perdido
-const NO_DATA    = "#e2e8f0"; // cinza — sem dados
+// ── cores (design system pastel) ────────────────────
+const HIT_EASY   = "#A5D6A7"; // verde pastel claro
+const HIT_MED    = "#81C784"; // verde pastel
+const HIT_HARD   = "#4CAF50"; // verde médio
+const MISS_EASY  = "#EF9A9A"; // rosa pastel claro
+const MISS_MED   = "#E57373"; // rosa pastel
+const MISS_HARD  = "#E53935"; // vermelho médio
+const NO_DATA    = "#CFD8DC"; // cinza neutro
 
 const chartConfig = {
   pct: { label: "Acerto", color: HIT_MED },

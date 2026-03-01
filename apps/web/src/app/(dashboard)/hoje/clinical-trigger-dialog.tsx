@@ -284,7 +284,7 @@ async function ensurePlantaoDeck(
     .insert({
       user_id: userId,
       title: "Plantão",
-      color: "#EA580C",
+      color: "#F5C49C",
       description: "Cards gerados a partir de casos clínicos do plantão",
     })
     .select("id")
