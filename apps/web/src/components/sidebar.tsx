@@ -10,6 +10,7 @@ import {
   Brain,
   Calendar,
   ClipboardList,
+  Crosshair,
   Settings,
   LogOut,
   Menu,
@@ -38,6 +39,7 @@ interface SidebarProps {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/hoje", label: "Hoje", icon: Crosshair },
   { href: "/decks", label: "Decks", icon: Layers },
   { href: "/review", label: "Revisão", icon: BookOpen },
   { href: "/simulados", label: "Simulados", icon: ClipboardList },

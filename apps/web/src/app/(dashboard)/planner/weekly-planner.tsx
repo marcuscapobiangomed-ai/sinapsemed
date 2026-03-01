@@ -178,9 +178,28 @@ export function WeeklyPlanner({ initialPlan, specialties, isPremium }: WeeklyPla
           return { ...prev, days };
         });
         toast.error("Erro ao atualizar bloco");
+        return;
+      }
+
+      // Offer specialty review when completing a block
+      if (completed) {
+        const entry = plan.days
+          .flatMap((d) => d.entries)
+          .find((e) => e.id === entryId);
+        if (entry?.specialty_slug) {
+          toast.success(`${entry.specialty_name} concluído!`, {
+            description: "Revisar flashcards desta especialidade?",
+            action: {
+              label: "Revisar",
+              onClick: () =>
+                router.push(`/review?specialty=${entry.specialty_slug}`),
+            },
+            duration: 8000,
+          });
+        }
       }
     },
-    [plan.days],
+    [plan.days, router],
   );
 
   // Delete block

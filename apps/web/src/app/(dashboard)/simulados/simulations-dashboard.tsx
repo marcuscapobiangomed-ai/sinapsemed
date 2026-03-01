@@ -18,6 +18,7 @@ import { SimulationCard } from "./simulation-card";
 import { AccuracyTrendChart } from "./accuracy-trend-chart";
 import { SpecialtyBreakdownChart } from "./specialty-breakdown-chart";
 import { AddSimulationDialog, type SimulationFormData } from "./add-simulation-dialog";
+import { FeedbackCard } from "./feedback-card";
 import type {
   Simulation,
   SimulationStats,
@@ -61,6 +62,10 @@ export function SimulationsDashboard({
   const [editingSimulation, setEditingSimulation] = useState<Simulation | null>(null);
   const [editInitialData, setEditInitialData] = useState<SimulationFormData | null>(null);
   const [simulations, setSimulations] = useState(initialSimulations);
+  const [feedback, setFeedback] = useState<{
+    gaps: { specialty_name: string; specialty_slug: string; combined_accuracy: number; advice: string }[];
+    overallAccuracy: number;
+  } | null>(null);
   const [, startTransition] = useTransition();
   const router = useRouter();
 
@@ -137,6 +142,23 @@ export function SimulationsDashboard({
       },
       ...prev,
     ]);
+
+    // Fire-and-forget: fetch feedback
+    fetch("/api/simulado-feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ simulation_id: sim.id }),
+    })
+      .then((res) => res.json())
+      .then((fb) => {
+        if (fb.top_gaps?.length > 0) {
+          setFeedback({
+            gaps: fb.top_gaps,
+            overallAccuracy: fb.overall_accuracy,
+          });
+        }
+      })
+      .catch(() => {/* silent */});
   }
 
   async function handleDelete(id: string) {
@@ -368,6 +390,15 @@ export function SimulationsDashboard({
         <AccuracyTrendChart data={accuracyTrend} />
         <SpecialtyBreakdownChart data={specialtyAccuracy} />
       </div>
+
+      {/* Feedback card */}
+      {feedback && (
+        <FeedbackCard
+          gaps={feedback.gaps}
+          overallAccuracy={feedback.overallAccuracy}
+          onDismiss={() => setFeedback(null)}
+        />
+      )}
 
       {/* Simulation list */}
       <div className="space-y-3">
