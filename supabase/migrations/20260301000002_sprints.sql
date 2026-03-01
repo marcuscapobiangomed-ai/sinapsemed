@@ -1,3 +1,15 @@
+-- ── Helper: updated_at trigger function ─────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
 -- Sprint phase enum
 CREATE TYPE public.sprint_phase AS ENUM ('diagnostic', 'active', 'closing', 'completed');
 
