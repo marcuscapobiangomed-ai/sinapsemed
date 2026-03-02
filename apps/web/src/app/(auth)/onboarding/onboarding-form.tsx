@@ -114,7 +114,7 @@ export function OnboardingForm({ userId, currentName, bancas }: OnboardingFormPr
     }
 
     toast.success("Perfil configurado!");
-    router.push("/dashboard");
+    router.push("/hoje");
     router.refresh();
   }
 

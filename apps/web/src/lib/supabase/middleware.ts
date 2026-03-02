@@ -37,10 +37,14 @@ export async function updateSession(request: NextRequest) {
   // Protected routes — redirect to login if not authenticated
   const isProtectedRoute =
     request.nextUrl.pathname.startsWith("/dashboard") ||
+    request.nextUrl.pathname.startsWith("/hoje") ||
     request.nextUrl.pathname.startsWith("/decks") ||
     request.nextUrl.pathname.startsWith("/review") ||
     request.nextUrl.pathname.startsWith("/planner") ||
     request.nextUrl.pathname.startsWith("/gaps") ||
+    request.nextUrl.pathname.startsWith("/simulados") ||
+    request.nextUrl.pathname.startsWith("/sprints") ||
+    request.nextUrl.pathname.startsWith("/analytics") ||
     request.nextUrl.pathname.startsWith("/onboarding") ||
     request.nextUrl.pathname.startsWith("/settings");
 
@@ -51,14 +55,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Auth routes — redirect to dashboard if already authenticated
+  // Auth routes — redirect to home if already authenticated
   const isAuthRoute =
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/register");
 
   if (isAuthRoute && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/hoje";
     return NextResponse.redirect(url);
   }
 

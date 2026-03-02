@@ -188,7 +188,7 @@ export function SessionSummary({
           Revisar mais
         </Button>
         <Button variant="outline" asChild>
-          <Link href="/dashboard">Voltar ao Dashboard</Link>
+          <Link href="/hoje">Voltar ao Início</Link>
         </Button>
       </div>
     </div>

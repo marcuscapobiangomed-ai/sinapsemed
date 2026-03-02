@@ -83,11 +83,11 @@ export function DashboardClient({
       {/* Header — sempre visível */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Olá, {firstName}!</h1>
+          <h1 className="text-2xl font-bold">Desempenho</h1>
           <p className="text-muted-foreground">
             {dueCount > 0
-              ? `Você tem ${dueCount} ${dueCount === 1 ? "card" : "cards"} para revisar hoje.`
-              : "Tudo em dia! Continue assim."}
+              ? `${firstName}, você tem ${dueCount} ${dueCount === 1 ? "card" : "cards"} para revisar hoje.`
+              : `${firstName}, tudo em dia! Continue assim.`}
           </p>
         </div>
         <DownloadReportButton />

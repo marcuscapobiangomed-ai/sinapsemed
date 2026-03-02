@@ -17,7 +17,7 @@ import {
 import { DashboardClient } from "./dashboard-client";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
+  title: "Desempenho",
 };
 
 const EMPTY_PREDICTION: import("@/lib/prediction-queries").ApprovalPrediction = {

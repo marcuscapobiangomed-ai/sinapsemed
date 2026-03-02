@@ -32,19 +32,19 @@ export function OnboardingTour({ userId, showTour }: OnboardingTourProps) {
           {
             element: "[data-tour='sidebar-hoje']",
             popover: {
-              title: "Sua Missao do Dia",
+              title: "Seu Ponto de Partida",
               description:
-                "Aqui voce ve o que precisa estudar hoje: cards para revisar, blocos planejados e lacunas prioritarias.",
+                "Aqui voce ve o que precisa fazer hoje: cards para revisar, blocos planejados e metas do sprint.",
               side: "right",
               align: "start",
             },
           },
           {
-            element: "[data-tour='sidebar-decks']",
+            element: "[data-tour='sidebar-planner']",
             popover: {
-              title: "Seus Decks",
+              title: "Planner Semanal",
               description:
-                "Crie decks de flashcards por especialidade. Use a IA para gerar cards ou importe do Anki.",
+                "Monte seu plano de estudos por especialidade. A IA sugere um plano otimizado baseado nas suas lacunas.",
               side: "right",
               align: "start",
             },
@@ -60,11 +60,11 @@ export function OnboardingTour({ userId, showTour }: OnboardingTourProps) {
             },
           },
           {
-            element: "[data-tour='sidebar-planner']",
+            element: "[data-tour='sidebar-decks']",
             popover: {
-              title: "Planner Semanal",
+              title: "Seus Decks",
               description:
-                "Monte seu plano de estudos por especialidade. A IA sugere um plano otimizado baseado nas suas lacunas.",
+                "Crie decks de flashcards por especialidade. Use a IA para gerar cards ou importe do Anki.",
               side: "right",
               align: "start",
             },
@@ -93,7 +93,7 @@ export function OnboardingTour({ userId, showTour }: OnboardingTourProps) {
             popover: {
               title: "Pronto para comecar!",
               description:
-                "Comece criando seu primeiro deck ou registrando um simulado. Bons estudos!",
+                "Comece pelo Hoje para ver sua missao do dia. Bons estudos!",
             },
           },
         ],

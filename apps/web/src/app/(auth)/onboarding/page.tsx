@@ -19,7 +19,7 @@ export default async function OnboardingPage() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.onboarding_completed) redirect("/dashboard");
+  if (profile?.onboarding_completed) redirect("/hoje");
 
   const { data: bancas } = await supabase
     .from("bancas")

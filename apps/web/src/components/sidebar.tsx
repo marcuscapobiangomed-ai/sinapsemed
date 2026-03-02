@@ -40,14 +40,14 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/hoje", label: "Hoje", icon: Crosshair },
-  { href: "/decks", label: "Decks", icon: Layers },
-  { href: "/review", label: "Revisão", icon: BookOpen },
-  { href: "/simulados", label: "Simulados", icon: ClipboardList },
-  { href: "/gaps", label: "Lacunas", icon: Brain },
   { href: "/planner", label: "Planner", icon: Calendar },
   { href: "/sprints", label: "Sprint", icon: Rocket },
+  { href: "/review", label: "Revisão", icon: BookOpen },
+  { href: "/decks", label: "Decks", icon: Layers },
+  { href: "/simulados", label: "Simulados", icon: ClipboardList },
+  { href: "/gaps", label: "Lacunas", icon: Brain },
+  { href: "/dashboard", label: "Desempenho", icon: LayoutDashboard },
 ];
 
 /** Shared nav content used in both desktop sidebar and mobile sheet */
@@ -83,7 +83,7 @@ function SidebarContent({
       {/* Logo + Notifications */}
       <div className="flex h-16 items-center justify-between px-4">
         <Link
-          href="/dashboard"
+          href="/hoje"
           className="flex items-center gap-2.5 group"
           onClick={onNavigate}
         >
@@ -197,7 +197,7 @@ export function MobileHeader({ user, notifications = [] }: SidebarProps) {
           <Menu className="h-5 w-5" />
         </Button>
 
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/hoje" className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
             <Brain className="h-3.5 w-3.5 text-primary-foreground" />
           </div>
