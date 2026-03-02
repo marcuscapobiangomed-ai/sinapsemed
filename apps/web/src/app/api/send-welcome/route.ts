@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(req: NextRequest) {
   const { name, email } = await req.json();
 
@@ -10,13 +8,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "name e email são obrigatórios" }, { status: 400 });
   }
 
-  // Se a variável não estiver configurada, apenas loga e retorna ok
-  // para não quebrar o fluxo de onboarding
   if (!process.env.RESEND_API_KEY) {
     console.warn("[send-welcome] RESEND_API_KEY não configurada — email não enviado");
     return NextResponse.json({ ok: true, skipped: true });
   }
 
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const firstName = name.split(" ")[0];
 
   try {
