@@ -29,20 +29,11 @@ export const metadata: Metadata = {
     siteName: "SinapseMED",
     title: "SinapseMED - Estudo Inteligente para Residência Médica",
     description: SITE_DESCRIPTION,
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "SinapseMED - Estudo Inteligente para Residência Médica",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "SinapseMED - Estudo Inteligente para Residência Médica",
     description: SITE_DESCRIPTION,
-    images: ["/og-image.png"],
   },
   robots: {
     index: true,
