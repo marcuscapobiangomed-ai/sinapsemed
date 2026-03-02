@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { getGapAnalysis } from "@/lib/gap-queries";
 import { GapsDashboard } from "./gaps-dashboard";
 
@@ -9,9 +9,7 @@ export const metadata: Metadata = {
 
 export default async function GapsPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   const userId = user!.id;
 
   const data = await getGapAnalysis(supabase, userId);

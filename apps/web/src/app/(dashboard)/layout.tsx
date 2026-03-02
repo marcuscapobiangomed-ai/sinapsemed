@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { Sidebar, MobileHeader } from "@/components/sidebar";
 import { getNotifications } from "@/lib/notifications";
 import { OnboardingTour } from "@/components/onboarding-tour";
@@ -9,16 +9,21 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
+  // Uses cached getUser() — deduplicates with page-level calls
+  const user = await getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, email, avatar_url, onboarding_completed, onboarding_tour_completed")
-    .eq("id", user.id)
-    .single();
+  const supabase = await createClient();
+
+  // Run profile + notifications in parallel
+  const [{ data: profile }, notifications] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name, email, avatar_url, onboarding_completed, onboarding_tour_completed")
+      .eq("id", user.id)
+      .single(),
+    getNotifications(supabase, user.id),
+  ]);
 
   if (!profile?.onboarding_completed) redirect("/onboarding");
 
@@ -27,8 +32,6 @@ export default async function DashboardLayout({
     email: profile.email,
     avatarUrl: profile.avatar_url,
   };
-
-  const notifications = await getNotifications(supabase, user.id);
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import {
   getActiveSprint,
@@ -17,9 +17,7 @@ export const metadata: Metadata = { title: "Sprint" };
 
 export default async function SprintsPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) redirect("/login");
 
   const [activeSprint, history] = await Promise.all([

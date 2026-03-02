@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { SettingsForm } from "./settings-form";
 
 export const metadata: Metadata = {
@@ -8,9 +8,7 @@ export const metadata: Metadata = {
 
 export default async function SettingsPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
   const [profileResult, allBancasResult, userBancasResult, allPlansResult, subscriptionResult] =
     await Promise.all([

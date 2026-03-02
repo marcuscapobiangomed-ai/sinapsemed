@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { ReviewSession } from "./review-session";
 import { BancaFilter } from "./banca-filter";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,9 +34,7 @@ export default async function ReviewPage({
   const cardLimit = isQuickMode ? 15 : 50;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
   // Check for active 80/20 sprint
   const activeSprint = await getActiveSprint(supabase, user!.id);

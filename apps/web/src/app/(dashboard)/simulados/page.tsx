@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import {
   getSimulations,
   getSimulationStats,
@@ -15,9 +15,7 @@ export const metadata: Metadata = {
 
 export default async function SimuladosPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   const userId = user!.id;
 
   const [simulations, stats, accuracyTrend, specialtyAccuracy, bancasResult, specialtiesResult, limits, usage] =

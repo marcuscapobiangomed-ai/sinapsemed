@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { getWeekPlan, getSpecialties } from "@/lib/planner-queries";
 import { getMondayOfWeek } from "@/lib/planner-utils";
 import { WeeklyPlanner } from "./weekly-planner";
@@ -15,9 +15,7 @@ export default async function PlannerPage({
 }) {
   const { week } = await searchParams;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   const userId = user!.id;
 
   const weekStart = week ?? getMondayOfWeek();
