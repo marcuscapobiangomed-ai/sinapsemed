@@ -13,10 +13,10 @@ interface QuickActionsProps {
 export function QuickActions({ dueCount, onClinicalTrigger }: QuickActionsProps) {
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Ações rápidas</CardTitle>
+      <CardHeader className="pb-2 pt-4 px-5">
+        <CardTitle className="text-sm font-semibold">Ações rápidas</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-2 px-5 pb-5">
         <Button asChild variant="outline" className="w-full justify-start gap-2">
           <Link href="/review?mode=quick">
             <Zap className="h-4 w-4" />

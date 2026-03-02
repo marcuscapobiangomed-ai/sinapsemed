@@ -12,10 +12,10 @@ const toneStyles = {
 } as const;
 
 const toneIcons = {
-  celebration: <Trophy className="h-8 w-8 text-green-500" />,
-  urgent: <AlertTriangle className="h-8 w-8 text-destructive" />,
-  motivational: <Target className="h-8 w-8 text-primary" />,
-  neutral: <Sun className="h-8 w-8 text-amber-500" />,
+  celebration: <Trophy className="h-5 w-5 text-green-500" />,
+  urgent: <AlertTriangle className="h-5 w-5 text-destructive" />,
+  motivational: <Target className="h-5 w-5 text-primary" />,
+  neutral: <Sun className="h-5 w-5 text-amber-500" />,
 } as const;
 
 interface DailyBriefingProps {
@@ -26,22 +26,22 @@ interface DailyBriefingProps {
 export function DailyBriefing({ briefing, streak }: DailyBriefingProps) {
   return (
     <Card className={toneStyles[briefing.tone]}>
-      <CardContent className="flex items-center gap-4 py-5">
-        <div className="shrink-0">
+      <CardContent className="flex items-start gap-4 p-5">
+        <div className="mt-1 shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-background/50">
           {briefing.tone === "urgent" && streak > 2 ? (
-            <Flame className="h-8 w-8 text-orange-500" />
+            <Flame className="h-5 w-5 text-orange-500" />
           ) : (
             toneIcons[briefing.tone]
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-muted-foreground font-medium">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
             {briefing.greeting}
           </p>
-          <h1 className="text-lg font-bold mt-0.5 leading-snug">
+          <h1 className="text-base font-bold mt-1 leading-snug">
             {briefing.headline}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
             {briefing.subtext}
           </p>
         </div>

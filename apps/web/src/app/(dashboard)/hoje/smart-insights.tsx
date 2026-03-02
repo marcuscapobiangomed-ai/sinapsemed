@@ -35,10 +35,10 @@ export function SmartInsights({ insights }: SmartInsightsProps) {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Insights</CardTitle>
+      <CardHeader className="pb-2 pt-4 px-5">
+        <CardTitle className="text-sm font-semibold">Insights</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 px-5 pb-5">
         {insights.map((insight) => {
           const Icon = iconMap[insight.icon];
           const colorClass = severityStyles[insight.severity];
