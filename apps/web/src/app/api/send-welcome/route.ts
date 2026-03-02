@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const { name, email } = await req.json();
@@ -13,6 +14,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, skipped: true });
   }
 
+  const { Resend } = await import("resend");
   const resend = new Resend(process.env.RESEND_API_KEY);
   const firstName = name.split(" ")[0];
 
