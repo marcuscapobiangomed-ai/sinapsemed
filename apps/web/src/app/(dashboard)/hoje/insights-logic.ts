@@ -5,7 +5,7 @@ import type { DueBySpecialty } from "./mission-logic";
 
 export interface Insight {
   id: string;
-  icon: "alert-triangle" | "trending-up" | "target" | "clock" | "trophy";
+  icon: "alert-triangle" | "trending-up" | "target" | "trophy";
   severity: "critical" | "positive" | "info";
   message: string;
   actionHref: string | null;
@@ -21,7 +21,7 @@ export function computeInsights(input: {
 }): Insight[] {
   const insights: Insight[] = [];
 
-  // TYPE 1: Neglected specialty (due cards + low accuracy)
+  // TYPE 1: Neglected specialty (informational — no review link)
   for (const due of input.dueBySpecialty) {
     const gap = input.gapAnalysis.specialties.find(
       (s) => s.specialty_slug === due.specialty_slug,
@@ -31,9 +31,9 @@ export function computeInsights(input: {
         id: `neglected-${due.specialty_slug}`,
         icon: "alert-triangle",
         severity: "critical",
-        message: `${due.specialty_name}: ${due.count} cards vencidos e accuracy de apenas ${gap.combined_accuracy}%.`,
-        actionHref: `/review?specialty=${due.specialty_slug}`,
-        actionLabel: "Revisar agora",
+        message: `${due.specialty_name}: ${due.count} cards vencidos e accuracy de ${gap.combined_accuracy}%.`,
+        actionHref: null,
+        actionLabel: null,
       });
     }
   }
@@ -81,19 +81,6 @@ export function computeInsights(input: {
       message: `Sequência de ${input.streak} dias! ${input.streak / 7} ${input.streak / 7 === 1 ? "semana" : "semanas"} consecutivas.`,
       actionHref: null,
       actionLabel: null,
-    });
-  }
-
-  // TYPE 5: Large overdue count
-  const totalDue = input.dueBySpecialty.reduce((s, d) => s + d.count, 0);
-  if (totalDue >= 50) {
-    insights.push({
-      id: "overdue-warning",
-      icon: "clock",
-      severity: "critical",
-      message: `${totalDue} cards acumulados. Considere uma sessão focada de revisão.`,
-      actionHref: "/review",
-      actionLabel: "Revisar",
     });
   }
 

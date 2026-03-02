@@ -53,3 +53,6 @@ flutter/
 _legacy/
 
 .vercel
+
+# Claude Code Skills
+.claude/skills/

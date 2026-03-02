@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   TrendingUp,
   Target,
-  Clock,
   Trophy,
   ArrowRight,
 } from "lucide-react";
@@ -16,7 +15,6 @@ const iconMap = {
   "alert-triangle": AlertTriangle,
   "trending-up": TrendingUp,
   target: Target,
-  clock: Clock,
   trophy: Trophy,
 } as const;
 
@@ -35,28 +33,30 @@ export function SmartInsights({ insights }: SmartInsightsProps) {
 
   return (
     <Card>
-      <CardHeader className="pb-2 pt-4 px-5">
-        <CardTitle className="text-sm font-semibold">Insights</CardTitle>
+      <CardHeader className="pb-2 pt-3 px-4">
+        <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Insights
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 px-5 pb-5">
+      <CardContent className="space-y-2 px-4 pb-4">
         {insights.map((insight) => {
           const Icon = iconMap[insight.icon];
           const colorClass = severityStyles[insight.severity];
 
           return (
-            <div key={insight.id} className="flex items-start gap-3">
-              <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${colorClass}`} />
+            <div key={insight.id} className="flex items-start gap-2.5">
+              <Icon className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${colorClass}`} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground leading-snug">
+                <p className="text-xs text-foreground leading-snug">
                   {insight.message}
                 </p>
                 {insight.actionHref && (
                   <Link
                     href={insight.actionHref}
-                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                    className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline mt-0.5"
                   >
                     {insight.actionLabel}
-                    <ArrowRight className="h-3 w-3" />
+                    <ArrowRight className="h-2.5 w-2.5" />
                   </Link>
                 )}
               </div>

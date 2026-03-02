@@ -3,19 +3,20 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Stethoscope } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PlanEntry } from "@/lib/planner-queries";
 import type { GapAnalysisData } from "@/lib/gap-queries";
 import type { Sprint, SprintGoal } from "@/lib/sprint-queries";
 import type { DueBySpecialty } from "./mission-logic";
 import { computeBriefing } from "./briefing-logic";
-import { buildMissions } from "./mission-logic";
+import { buildPlannerMissions, buildSprintMissions } from "./mission-logic";
 import { computeInsights } from "./insights-logic";
-import { DailyBriefing } from "./daily-briefing";
-import { ProgressRing } from "./progress-ring";
-import { MissionList } from "./mission-list";
+import { computePageMode } from "./page-mode";
+import { StatusBar } from "./status-bar";
+import { PrimaryAction } from "./primary-action";
 import { SmartInsights } from "./smart-insights";
-import { QuickActions } from "./quick-actions";
+import { MissionItem } from "./mission-item";
 import { ClinicalTriggerDialog } from "./clinical-trigger-dialog";
 
 interface TodayClientProps {
@@ -126,12 +127,18 @@ export function TodayClient({
     entries,
   });
 
-  const missions = buildMissions({
+  const pageMode = computePageMode({
+    dueCount,
     entries,
+    totalCompleted,
+    studyGoalMinutes,
+    reviewsToday,
+    streak,
     dueBySpecialty,
-    sprintGoals,
-    activeSprint,
   });
+
+  const plannerMissions = buildPlannerMissions(entries);
+  const sprintMissions = buildSprintMissions(sprintGoals, activeSprint);
 
   const insights = computeInsights({
     gapAnalysis,
@@ -142,28 +149,63 @@ export function TodayClient({
   });
 
   return (
-    <div className="space-y-6">
-      <DailyBriefing briefing={briefing} streak={streak} />
-
-      <ProgressRing
+    <div className="space-y-5">
+      {/* ZONE 1: Status Bar */}
+      <StatusBar
+        greeting={briefing.greeting}
+        streak={streak}
+        reviewsToday={reviewsToday}
         totalCompleted={totalCompleted}
         studyGoalMinutes={studyGoalMinutes}
-        streak={streak}
-        dueCount={dueCount}
-        reviewsToday={reviewsToday}
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <MissionList missions={missions} onToggleEntry={handleToggle} />
-        </div>
-
-        <div className="space-y-6">
-          <SmartInsights insights={insights} />
-          <QuickActions
-            dueCount={dueCount}
+      {/* ZONE 2 + ZONE 3 */}
+      <div className="grid gap-5 lg:grid-cols-5">
+        {/* ZONE 2: Primary Action */}
+        <div className="lg:col-span-3">
+          <PrimaryAction
+            pageMode={pageMode}
+            briefing={briefing}
+            plannerMissions={plannerMissions}
+            onToggleEntry={handleToggle}
             onClinicalTrigger={() => setClinicalDialogOpen(true)}
           />
+        </div>
+
+        {/* ZONE 3: Secondary Info */}
+        <div className="space-y-4 lg:col-span-2 lg:sticky lg:top-5 lg:self-start">
+          {/* Sprint goals */}
+          {sprintMissions.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Sprint
+              </h3>
+              <div className="divide-y rounded-lg border">
+                {sprintMissions.map((mission) => (
+                  <MissionItem key={mission.id} mission={mission} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Insights */}
+          <SmartInsights insights={insights} />
+
+          {/* Clinical Trigger */}
+          {pageMode.mode !== "done" && (
+            <button
+              onClick={() => setClinicalDialogOpen(true)}
+              className="flex items-center gap-3 w-full rounded-lg border border-dashed p-3 text-left hover:bg-muted/50 transition-colors"
+            >
+              <Stethoscope className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Vi no Plantão</p>
+                <p className="text-xs text-muted-foreground">
+                  Criar flashcards a partir de um caso clínico
+                </p>
+              </div>
+            </button>
+          )}
         </div>
       </div>
 
