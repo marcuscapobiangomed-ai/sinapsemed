@@ -7,14 +7,12 @@ import type OpenAI from "openai";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+import { corsHeaders, corsOptions } from "@/lib/cors";
+
+const CORS_HEADERS = corsHeaders();
 
 export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
+  return corsOptions();
 }
 
 /** Extract all banca slugs for a user */

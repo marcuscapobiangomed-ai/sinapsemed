@@ -1,25 +1,34 @@
 "use client";
 
+import { lazy, Suspense } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Layers, Brain, ArrowRight } from "lucide-react";
+import { BookOpen, Layers, Brain, ArrowRight, Loader2 } from "lucide-react";
 
-// Dashboard components
+// Non-chart components (small, always visible)
 import { StreakCard } from "./streak-card";
 import { PredictionCard } from "./prediction-card";
-import { AccuracyChart } from "./accuracy-chart";
-import { CardStateChart } from "./card-state-chart";
-import { HeatmapChart } from "./heatmap-chart";
-import { DeckPerformanceChart } from "./deck-performance-chart";
 import { DownloadReportButton } from "./download-report-button";
 
-// Analytics components
-import { ApprovalTrendChart } from "../analytics/approval-trend-chart";
-import { ProficiencyRadarChart } from "../analytics/proficiency-radar-chart";
-import { FrictionAlerts } from "../analytics/friction-alerts";
-import { ComplexityChart } from "../analytics/complexity-chart";
+// Lazy-loaded chart components (recharts ~100KB — only loaded when tab renders)
+const AccuracyChart = lazy(() => import("./accuracy-chart").then(m => ({ default: m.AccuracyChart })));
+const CardStateChart = lazy(() => import("./card-state-chart").then(m => ({ default: m.CardStateChart })));
+const HeatmapChart = lazy(() => import("./heatmap-chart").then(m => ({ default: m.HeatmapChart })));
+const DeckPerformanceChart = lazy(() => import("./deck-performance-chart").then(m => ({ default: m.DeckPerformanceChart })));
+const ApprovalTrendChart = lazy(() => import("../analytics/approval-trend-chart").then(m => ({ default: m.ApprovalTrendChart })));
+const ProficiencyRadarChart = lazy(() => import("../analytics/proficiency-radar-chart").then(m => ({ default: m.ProficiencyRadarChart })));
+const FrictionAlerts = lazy(() => import("../analytics/friction-alerts").then(m => ({ default: m.FrictionAlerts })));
+const ComplexityChart = lazy(() => import("../analytics/complexity-chart").then(m => ({ default: m.ComplexityChart })));
+
+function ChartFallback() {
+  return (
+    <div className="flex items-center justify-center h-48 rounded-lg border bg-muted/20">
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 
 // Types
 import type {
@@ -93,14 +102,22 @@ export function DashboardClient({
 
         {/* ── Aba Análise ── */}
         <TabsContent value="analise" className="space-y-6 mt-0">
-          <ApprovalTrendChart data={approvalTrendData} />
+          <Suspense fallback={<ChartFallback />}>
+            <ApprovalTrendChart data={approvalTrendData} />
+          </Suspense>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <ProficiencyRadarChart data={radarData} />
-            <FrictionAlerts alerts={frictionAlerts} />
+            <Suspense fallback={<ChartFallback />}>
+              <ProficiencyRadarChart data={radarData} />
+            </Suspense>
+            <Suspense fallback={<ChartFallback />}>
+              <FrictionAlerts alerts={frictionAlerts} />
+            </Suspense>
           </div>
 
-          <ComplexityChart data={complexityData} />
+          <Suspense fallback={<ChartFallback />}>
+            <ComplexityChart data={complexityData} />
+          </Suspense>
         </TabsContent>
 
         {/* ── Aba Flashcards ── */}
@@ -153,17 +170,25 @@ export function DashboardClient({
           {/* Prediction + Accuracy */}
           <div className="grid gap-4 md:grid-cols-2">
             <PredictionCard prediction={prediction} />
-            <AccuracyChart data={accuracyData} />
+            <Suspense fallback={<ChartFallback />}>
+              <AccuracyChart data={accuracyData} />
+            </Suspense>
           </div>
 
           {/* Card State */}
-          <CardStateChart data={cardStateData} />
+          <Suspense fallback={<ChartFallback />}>
+            <CardStateChart data={cardStateData} />
+          </Suspense>
 
           {/* Heatmap */}
-          <HeatmapChart data={heatmapData} />
+          <Suspense fallback={<ChartFallback />}>
+            <HeatmapChart data={heatmapData} />
+          </Suspense>
 
           {/* Deck Performance */}
-          <DeckPerformanceChart data={deckPerformanceData} />
+          <Suspense fallback={<ChartFallback />}>
+            <DeckPerformanceChart data={deckPerformanceData} />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>

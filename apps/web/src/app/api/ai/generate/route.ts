@@ -6,14 +6,12 @@ import { getGroq, GROQ_MODEL } from "@/lib/ai";
 export const runtime = "nodejs";
 export const maxDuration = 20;
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+import { corsHeaders, corsOptions } from "@/lib/cors";
+
+const CORS_HEADERS = corsHeaders();
 
 export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
+  return corsOptions();
 }
 
 /** Extract all banca display names for a user */
