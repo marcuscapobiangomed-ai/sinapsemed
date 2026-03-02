@@ -4,9 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getWeekPlan } from "@/lib/planner-queries";
 import { getGapAnalysis } from "@/lib/gap-queries";
 import { getStreak } from "@/lib/dashboard-queries";
-import { getActiveSprint } from "@/lib/sprint-queries";
+import { getActiveSprint, getSprintGoals } from "@/lib/sprint-queries";
 import { getMondayOfWeek, isToday } from "@/lib/planner-utils";
 import { TodayClient } from "./today-client";
+import type { DueBySpecialty } from "./mission-logic";
 
 export const metadata: Metadata = {
   title: "Hoje",
@@ -26,29 +27,70 @@ export default async function HojePage() {
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
-  const [weekPlan, gapAnalysis, streak, activeSprint, dueResult, reviewsTodayResult] =
-    await Promise.all([
-      getWeekPlan(supabase, user.id, weekStart),
-      getGapAnalysis(supabase, user.id),
-      getStreak(supabase, user.id),
-      getActiveSprint(supabase, user.id),
-      supabase
-        .from("flashcards")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("is_suspended", false)
-        .or(
-          `next_review_at.is.null,next_review_at.lte.${new Date().toISOString()}`,
-        ),
-      supabase
-        .from("reviews")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .gte("reviewed_at", todayStart.toISOString())
-        .lt("reviewed_at", tomorrowStart.toISOString()),
-    ]);
+  const [
+    weekPlan,
+    gapAnalysis,
+    streak,
+    activeSprint,
+    dueResult,
+    reviewsTodayResult,
+    dueBySpecialtyRaw,
+    profileResult,
+  ] = await Promise.all([
+    getWeekPlan(supabase, user.id, weekStart),
+    getGapAnalysis(supabase, user.id),
+    getStreak(supabase, user.id),
+    getActiveSprint(supabase, user.id),
+    supabase
+      .from("flashcards")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("is_suspended", false)
+      .or(
+        `next_review_at.is.null,next_review_at.lte.${new Date().toISOString()}`,
+      ),
+    supabase
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("reviewed_at", todayStart.toISOString())
+      .lt("reviewed_at", tomorrowStart.toISOString()),
+    supabase
+      .from("flashcards")
+      .select("specialty_id, specialties(name, slug)")
+      .eq("user_id", user.id)
+      .eq("is_suspended", false)
+      .or(
+        `next_review_at.is.null,next_review_at.lte.${new Date().toISOString()}`,
+      ),
+    supabase.from("profiles").select("full_name").eq("id", user.id).single(),
+  ]);
 
-  // Find today's day index (0=Mon .. 6=Sun)
+  const sprintGoals = activeSprint
+    ? await getSprintGoals(supabase, activeSprint.id)
+    : [];
+
+  // Group due cards by specialty
+  const dueMap = new Map<string, DueBySpecialty>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const row of (dueBySpecialtyRaw.data ?? []) as any[]) {
+    const spec = row.specialties;
+    if (!spec?.slug) continue;
+    const existing = dueMap.get(spec.slug);
+    if (existing) {
+      existing.count++;
+    } else {
+      dueMap.set(spec.slug, {
+        specialty_name: spec.name,
+        specialty_slug: spec.slug,
+        count: 1,
+      });
+    }
+  }
+  const dueBySpecialty = Array.from(dueMap.values()).sort(
+    (a, b) => b.count - a.count,
+  );
+
   const todayIndex = weekPlan.days.findIndex((_, i) =>
     isToday(weekStart, i),
   );
@@ -59,15 +101,21 @@ export default async function HojePage() {
   const todayTotalCompleted =
     todayIndex >= 0 ? weekPlan.days[todayIndex].total_completed : 0;
 
+  const firstName =
+    profileResult.data?.full_name?.split(" ")[0] ?? "estudante";
+
   return (
     <TodayClient
+      firstName={firstName}
       entries={todayEntries}
       todayTotalPlanned={todayTotalPlanned}
       todayTotalCompleted={todayTotalCompleted}
       dueCount={dueResult.count ?? 0}
       reviewsToday={reviewsTodayResult.count ?? 0}
       streak={streak}
-      topGaps={gapAnalysis.specialties.slice(0, 3)}
+      gapAnalysis={gapAnalysis}
+      dueBySpecialty={dueBySpecialty}
+      sprintGoals={sprintGoals}
       studyGoalMinutes={Math.round(weekPlan.study_hours_goal * 60)}
       activeSprint={activeSprint}
     />
