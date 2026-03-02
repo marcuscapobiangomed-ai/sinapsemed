@@ -34,12 +34,8 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  silent: !process.env.CI,
-  widenClientFileUpload: true,
-  sourcemaps: {
-    deleteSourcemapsAfterUpload: true,
-  },
+  org: process.env.SENTRY_ORG ?? "sinapsemed",
+  project: process.env.SENTRY_PROJECT ?? "javascript-nextjs",
+  silent: true,
   disableLogger: true,
 });
