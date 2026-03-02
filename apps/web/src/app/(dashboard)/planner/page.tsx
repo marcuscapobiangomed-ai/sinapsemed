@@ -20,9 +20,15 @@ export default async function PlannerPage({
 
   const weekStart = week ?? getMondayOfWeek();
 
+  const EMPTY_WEEK: import("@/lib/planner-queries").WeekPlan = {
+    week_start: weekStart,
+    study_hours_goal: 4,
+    days: Array.from({ length: 7 }, (_, i) => ({ day_of_week: i, entries: [], total_planned: 0, total_completed: 0, due_cards: 0 })),
+  };
+
   const [weekPlan, specialties, subscriptionResult] = await Promise.all([
-    getWeekPlan(supabase, userId, weekStart),
-    getSpecialties(supabase),
+    getWeekPlan(supabase, userId, weekStart).catch(() => EMPTY_WEEK),
+    getSpecialties(supabase).catch(() => []),
     supabase
       .from("subscriptions")
       .select("plans(has_priority_ai)")

@@ -25,6 +25,14 @@ export default async function HojePage() {
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
+  const EMPTY_WEEK: import("@/lib/planner-queries").WeekPlan = {
+    week_start: weekStart,
+    study_hours_goal: 4,
+    days: Array.from({ length: 7 }, (_, i) => ({ day_of_week: i, entries: [], total_planned: 0, total_completed: 0, due_cards: 0 })),
+  };
+  const EMPTY_GAP: import("@/lib/gap-queries").GapAnalysisData = { specialties: [], banca_name: null, total_flashcard_reviews: 0, total_simulation_questions: 0, has_flashcard_data: false, has_simulation_data: false, overall_accuracy: 0 };
+
+  // .catch() prevents single failure from crashing the entire page
   const [
     weekPlan,
     gapAnalysis,
@@ -35,10 +43,10 @@ export default async function HojePage() {
     dueBySpecialtyRaw,
     profileResult,
   ] = await Promise.all([
-    getWeekPlan(supabase, user.id, weekStart),
-    getGapAnalysis(supabase, user.id),
-    getStreak(supabase, user.id),
-    getActiveSprint(supabase, user.id),
+    getWeekPlan(supabase, user.id, weekStart).catch(() => EMPTY_WEEK),
+    getGapAnalysis(supabase, user.id).catch(() => EMPTY_GAP),
+    getStreak(supabase, user.id).catch(() => 0),
+    getActiveSprint(supabase, user.id).catch(() => null),
     supabase
       .from("flashcards")
       .select("id", { count: "exact", head: true })
@@ -65,7 +73,7 @@ export default async function HojePage() {
   ]);
 
   const sprintGoals = activeSprint
-    ? await getSprintGoals(supabase, activeSprint.id)
+    ? await getSprintGoals(supabase, activeSprint.id).catch(() => [])
     : [];
 
   // Group due cards by specialty

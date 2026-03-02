@@ -51,7 +51,12 @@ export async function POST(req: NextRequest) {
   }
 
   if (!image.startsWith("data:") && !image.startsWith("http")) {
-    return NextResponse.json({ error: "Formato de imagem inválido" }, { status: 400 });
+    return NextResponse.json({ error: "Formato de imagem invalido" }, { status: 400 });
+  }
+
+  // Image size protection — prevents expensive Vision API calls (max 5MB)
+  if (image.length > 5 * 1024 * 1024) {
+    return NextResponse.json({ error: "Imagem muito grande (max 5MB)" }, { status: 400 });
   }
 
   if (!process.env.GROQ_API_KEY) {

@@ -19,12 +19,14 @@ export default async function AnalyticsPage() {
 
   if (!user) redirect("/login");
 
+  const EMPTY_TREND = { points: [], cutoff_score: null, banca_name: null };
+
   const [complexityData, approvalTrendData, radarData, frictionAlerts] =
     await Promise.all([
-      getComplexityAggregated(supabase, user.id),
-      getApprovalTrendData(supabase, user.id),
-      getRadarData(supabase, user.id),
-      getFrictionAlerts(supabase, user.id),
+      getComplexityAggregated(supabase, user.id).catch(() => []),
+      getApprovalTrendData(supabase, user.id).catch(() => EMPTY_TREND),
+      getRadarData(supabase, user.id).catch(() => []),
+      getFrictionAlerts(supabase, user.id).catch(() => []),
     ]);
 
   return (

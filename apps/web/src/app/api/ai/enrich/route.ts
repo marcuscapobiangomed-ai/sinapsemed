@@ -27,6 +27,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Dados incompletos" }, { status: 400 });
   }
 
+  // Input size protection
+  if (front.length > 1000 || back.length > 2000) {
+    return NextResponse.json({ error: "Texto do flashcard muito longo" }, { status: 400 });
+  }
+
   // Buscar banca primária do usuário
   const { data: userBanca } = await supabase
     .from("user_bancas")

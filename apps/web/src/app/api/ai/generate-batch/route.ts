@@ -37,6 +37,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Input size protection
+  if (topic.length > 500) {
+    return NextResponse.json(
+      { error: "Topic muito longo (max 500 caracteres)" },
+      { status: 400 },
+    );
+  }
+
   const cardCount = Math.min(Math.max(Number(count), 3), 5);
 
   const groq = getGroq();

@@ -20,12 +20,26 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
+const EMPTY_PREDICTION: import("@/lib/prediction-queries").ApprovalPrediction = {
+  probability: 0,
+  confidence: "low",
+  trend: "stable",
+  banca_name: null,
+  weighted_accuracy: 0,
+  overall_accuracy: 0,
+  simulation_count: 0,
+  strengths: [],
+  critical_gaps: [],
+  data_points: 0,
+};
+const EMPTY_TREND = { points: [], cutoff_score: null, banca_name: null };
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const user = await getUser();
   const userId = user!.id;
 
-  // Fetch all data in parallel
+  // Fetch all data in parallel — .catch() prevents single failure from crashing page
   const [
     profileResult,
     decksResult,
@@ -43,31 +57,19 @@ export default async function DashboardPage() {
     frictionAlerts,
   ] = await Promise.all([
     supabase.from("profiles").select("full_name").eq("id", userId).single(),
-    supabase
-      .from("decks")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("is_archived", false),
-    supabase
-      .from("flashcards")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId),
-    supabase
-      .from("flashcards")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("is_suspended", false)
-      .lte("next_review_at", new Date().toISOString()),
-    getStreak(supabase, userId),
-    getAccuracyOverTime(supabase, userId),
-    getHeatmapData(supabase, userId),
-    getCardStateDistribution(supabase, userId),
-    getDeckPerformance(supabase, userId),
-    getApprovalPrediction(supabase, userId),
-    getComplexityAggregated(supabase, userId),
-    getApprovalTrendData(supabase, userId),
-    getRadarData(supabase, userId),
-    getFrictionAlerts(supabase, userId),
+    supabase.from("decks").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_archived", false),
+    supabase.from("flashcards").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    supabase.from("flashcards").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_suspended", false).lte("next_review_at", new Date().toISOString()),
+    getStreak(supabase, userId).catch(() => 0),
+    getAccuracyOverTime(supabase, userId).catch(() => []),
+    getHeatmapData(supabase, userId).catch(() => []),
+    getCardStateDistribution(supabase, userId).catch(() => []),
+    getDeckPerformance(supabase, userId).catch(() => []),
+    getApprovalPrediction(supabase, userId).catch(() => EMPTY_PREDICTION),
+    getComplexityAggregated(supabase, userId).catch(() => []),
+    getApprovalTrendData(supabase, userId).catch(() => EMPTY_TREND),
+    getRadarData(supabase, userId).catch(() => []),
+    getFrictionAlerts(supabase, userId).catch(() => []),
   ]);
 
   const firstName = profileResult.data?.full_name?.split(" ")[0] ?? "Estudante";

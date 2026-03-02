@@ -92,6 +92,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Input size protection — prevents expensive API calls
+  if (text.length > 5000) {
+    return NextResponse.json(
+      { error: "Texto muito longo (max 5000 caracteres)" },
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
+
   const bancaContext =
     bancaNames.length > 0
       ? `Bancas do estudante: ${bancaNames.join(", ")}.`

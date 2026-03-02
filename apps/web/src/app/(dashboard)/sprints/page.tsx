@@ -21,12 +21,12 @@ export default async function SprintsPage() {
   if (!user) redirect("/login");
 
   const [activeSprint, history] = await Promise.all([
-    getActiveSprint(supabase, user.id),
-    getSprintHistory(supabase, user.id),
+    getActiveSprint(supabase, user.id).catch(() => null),
+    getSprintHistory(supabase, user.id).catch(() => []),
   ]);
 
   const goals = activeSprint
-    ? await getSprintGoals(supabase, activeSprint.id)
+    ? await getSprintGoals(supabase, activeSprint.id).catch(() => [])
     : [];
 
   return (

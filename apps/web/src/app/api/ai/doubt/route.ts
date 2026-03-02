@@ -80,9 +80,26 @@ export async function POST(req: NextRequest) {
   };
 
   if (!question?.trim()) {
-    return new Response("Pergunta não pode estar vazia", {
+    return new Response("Pergunta nao pode estar vazia", {
       status: 400,
       headers: CORS_HEADERS,
+    });
+  }
+
+  // Input size protection — prevents expensive API calls
+  if (question.length > 2000) {
+    return new Response(JSON.stringify({ error: "Pergunta muito longa (max 2000 caracteres)" }), {
+      status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+  if (context && context.length > 3000) {
+    return new Response(JSON.stringify({ error: "Contexto muito longo (max 3000 caracteres)" }), {
+      status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+  if (image && image.length > 5 * 1024 * 1024) {
+    return new Response(JSON.stringify({ error: "Imagem muito grande (max 5MB)" }), {
+      status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   }
 

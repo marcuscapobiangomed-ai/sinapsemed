@@ -18,16 +18,20 @@ export default async function SimuladosPage() {
   const user = await getUser();
   const userId = user!.id;
 
+  const EMPTY_STATS: import("@/lib/simulation-queries").SimulationStats = { total_count: 0, avg_accuracy: 0, trend: 0, top_source: null };
+  const EMPTY_LIMITS: import("@/lib/plan-limits").PlanLimits = { plan_slug: "free", plan_name: "free", max_flashcards_per_month: null, max_doubts_per_day: null, max_bancas: null, max_simulations_per_month: null };
+  const EMPTY_USAGE: import("@/lib/plan-limits").UsageCount = { flashcards_this_month: 0, doubts_today: 0, simulations_this_month: 0, bancas_count: 0 };
+
   const [simulations, stats, accuracyTrend, specialtyAccuracy, bancasResult, specialtiesResult, limits, usage] =
     await Promise.all([
-      getSimulations(supabase, userId),
-      getSimulationStats(supabase, userId),
-      getAccuracyTrend(supabase, userId),
-      getSpecialtyAccuracy(supabase, userId),
+      getSimulations(supabase, userId).catch(() => []),
+      getSimulationStats(supabase, userId).catch(() => EMPTY_STATS),
+      getAccuracyTrend(supabase, userId).catch(() => []),
+      getSpecialtyAccuracy(supabase, userId).catch(() => []),
       supabase.from("bancas").select("id, name").order("name"),
       supabase.from("specialties").select("id, name").order("name"),
-      getPlanLimits(supabase, userId),
-      getUsageCount(supabase, userId),
+      getPlanLimits(supabase, userId).catch(() => EMPTY_LIMITS),
+      getUsageCount(supabase, userId).catch(() => EMPTY_USAGE),
     ]);
 
   const simLimit = checkSimulationLimit(limits, usage);

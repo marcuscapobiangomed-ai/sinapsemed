@@ -34,7 +34,13 @@ export default async function SettingsPage() {
         .maybeSingle(),
     ]);
 
-  const profile = profileResult.data!;
+  const profile = profileResult.data ?? {
+    full_name: "",
+    medical_school: null,
+    graduation_year: null,
+    target_year: null,
+    study_hours_per_day: 4,
+  };
   const allBancas = allBancasResult.data ?? [];
   const currentUserBancas = userBancasResult.data ?? [];
   const allPlans = allPlansResult.data ?? [];

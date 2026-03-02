@@ -52,7 +52,16 @@ export async function POST(req: NextRequest) {
 
   if (!flashcard_id || !rating) {
     return NextResponse.json(
-      { error: "flashcard_id e rating são obrigatórios" },
+      { error: "flashcard_id e rating sao obrigatorios" },
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
+
+  // Validate rating is a valid value
+  const VALID_RATINGS = ["again", "hard", "good", "easy"];
+  if (!VALID_RATINGS.includes(rating)) {
+    return NextResponse.json(
+      { error: "Rating invalido. Use: again, hard, good, easy" },
       { status: 400, headers: CORS_HEADERS },
     );
   }
