@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Trophy, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -25,9 +24,6 @@ export function SprintClosure({ sprint }: SprintClosureProps) {
   async function handleClose() {
     setIsClosing(true);
     try {
-      const supabase = createClient();
-
-      // Fetch current gap analysis for diagnostic_end
       const res = await fetch("/api/sprints/close", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -41,7 +37,6 @@ export function SprintClosure({ sprint }: SprintClosureProps) {
 
       setIsClosed(true);
       toast.success("Sprint concluido!");
-      router.refresh();
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Erro ao fechar sprint",
@@ -59,7 +54,7 @@ export function SprintClosure({ sprint }: SprintClosureProps) {
       .eq("id", sprint.id);
 
     toast.success("Sprint finalizado! Inicie o proximo quando estiver pronto.");
-    router.refresh();
+    router.push("/sprints");
   }
 
   if (progress.isOverdue && sprint.current_phase === "active") {

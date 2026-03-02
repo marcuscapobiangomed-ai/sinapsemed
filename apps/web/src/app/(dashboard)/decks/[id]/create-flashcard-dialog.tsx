@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,15 +15,16 @@ import {
 import { Plus, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import type { Flashcard } from "@dindin/shared";
 
 interface CreateFlashcardDialogProps {
   deckId: string;
   limitReached?: boolean;
   limitInfo?: string;
+  onCreated?: (card: Flashcard) => void;
 }
 
-export function CreateFlashcardDialog({ deckId, limitReached, limitInfo }: CreateFlashcardDialogProps) {
-  const router = useRouter();
+export function CreateFlashcardDialog({ deckId, limitReached, limitInfo, onCreated }: CreateFlashcardDialogProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,7 +39,7 @@ export function CreateFlashcardDialog({ deckId, limitReached, limitInfo }: Creat
     const tagsRaw = (formData.get("tags") as string).trim();
     const tags = tagsRaw ? tagsRaw.split(",").map((t) => t.trim()).filter(Boolean) : [];
 
-    const { error } = await supabase.from("flashcards").insert({
+    const { data: card, error } = await supabase.from("flashcards").insert({
       user_id: user!.id,
       deck_id: deckId,
       front: formData.get("front") as string,
@@ -47,7 +47,7 @@ export function CreateFlashcardDialog({ deckId, limitReached, limitInfo }: Creat
       extra_context: (formData.get("extra_context") as string) || null,
       tags,
       source: "manual",
-    });
+    }).select().single();
 
     if (error) {
       toast.error("Erro ao criar flashcard", { description: error.message });
@@ -58,7 +58,7 @@ export function CreateFlashcardDialog({ deckId, limitReached, limitInfo }: Creat
     toast.success("Flashcard criado!");
     setOpen(false);
     setIsLoading(false);
-    router.refresh();
+    if (card) onCreated?.(card as Flashcard);
   }
 
   return (

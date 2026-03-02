@@ -1,6 +1,14 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getAccuracyTrend, type AccuracyTrendPoint } from "./simulation-queries";
 
+// ── Helpers ──
+
+function daysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString();
+}
+
 // ══════════════════════════════════════════════
 //  Types
 // ══════════════════════════════════════════════
@@ -314,7 +322,8 @@ export async function getRadarData(
   const { data: reviews } = await supabase
     .from("reviews")
     .select("rating, flashcards!inner(specialty_id, specialties(slug))")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .gte("reviewed_at", daysAgo(180));
 
   if (reviews) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -364,26 +373,29 @@ export async function getFrictionAlerts(
 
   if (!sims || sims.length < 2) return [];
 
-  // Fetch results for each simulation
+  // Fetch all results in a single batch query (avoids N+1)
+  const simIds = sims.map((s) => s.id);
+  const { data: allResults } = await supabase
+    .from("simulation_results")
+    .select("simulation_id, questions, correct, specialties(name, slug)")
+    .in("simulation_id", simIds);
+
   const resultsMap = new Map<string, Map<string, { name: string; accuracy: number }>>();
-
   for (const sim of sims) {
-    const { data: results } = await supabase
-      .from("simulation_results")
-      .select("questions, correct, specialties(name, slug)")
-      .eq("simulation_id", sim.id);
+    resultsMap.set(sim.id, new Map());
+  }
 
-    const specMap = new Map<string, { name: string; accuracy: number }>();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const r of (results ?? []) as any[]) {
-      const slug = r.specialties?.slug;
-      if (!slug || r.questions === 0) continue;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const r of (allResults ?? []) as any[]) {
+    const slug = r.specialties?.slug;
+    if (!slug || r.questions === 0) continue;
+    const specMap = resultsMap.get(r.simulation_id);
+    if (specMap) {
       specMap.set(slug, {
         name: r.specialties.name,
         accuracy: Math.round((r.correct / r.questions) * 100),
       });
     }
-    resultsMap.set(sim.id, specMap);
   }
 
   const alerts: FrictionAlert[] = [];

@@ -139,7 +139,6 @@ export function ClinicalTriggerDialog({
 
       setSavedCount(toSave.length);
       setStep("done");
-      router.refresh();
     } finally {
       setIsSaving(false);
     }

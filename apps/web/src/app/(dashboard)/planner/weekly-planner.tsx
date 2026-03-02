@@ -256,10 +256,48 @@ export function WeeklyPlanner({ initialPlan, specialties, isPremium }: WeeklyPla
     [plan.days],
   );
 
-  // After AI generates blocks, refresh the page
-  function handleAIGenerated() {
+  // After AI generates blocks, refetch plan data
+  async function handleAIGenerated() {
     setShowAIDialog(false);
-    router.refresh();
+
+    // Refetch entries for this week to get the AI-generated blocks
+    const supabase = createClient();
+    const { data: entries } = await supabase
+      .from("study_plan_entries")
+      .select("id, day_of_week, specialty_id, planned_minutes, completed_minutes, is_completed, is_ai_generated, notes, specialties(name, slug)")
+      .eq("week_start", plan.week_start)
+      .eq("user_id", (await supabase.auth.getUser()).data.user!.id)
+      .order("created_at", { ascending: true });
+
+    if (entries) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const typedEntries = entries as Array<Record<string, any>>;
+      setPlan((prev) => {
+        const days = prev.days.map((day, dayIndex) => {
+          const dayEntries: PlanEntry[] = typedEntries
+            .filter((e) => e.day_of_week === dayIndex)
+            .map((e) => ({
+              id: e.id,
+              day_of_week: e.day_of_week,
+              specialty_id: e.specialty_id,
+              specialty_name: e.specialties?.name ?? "—",
+              specialty_slug: e.specialties?.slug ?? "",
+              planned_minutes: e.planned_minutes,
+              completed_minutes: e.completed_minutes,
+              is_completed: e.is_completed,
+              is_ai_generated: e.is_ai_generated,
+              notes: e.notes,
+            }));
+          return {
+            ...day,
+            entries: dayEntries,
+            total_planned: dayEntries.reduce((sum, e) => sum + e.planned_minutes, 0),
+            total_completed: dayEntries.reduce((sum, e) => sum + e.completed_minutes, 0),
+          };
+        });
+        return { ...prev, days };
+      });
+    }
   }
 
   return (

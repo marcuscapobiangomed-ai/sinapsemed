@@ -36,6 +36,12 @@ export interface GapAnalysisData {
 
 // ── Helpers ──
 
+function daysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString();
+}
+
 // Normaliza chaves do JSONB specialty_weights que diferem dos slugs da tabela specialties
 const WEIGHT_KEY_TO_SLUG: Record<string, string> = {
   cirurgia: "cirurgia_geral",
@@ -68,7 +74,8 @@ async function getFlashcardAccuracyBySpecialty(
   const { data: reviews } = await supabase
     .from("reviews")
     .select("rating, flashcards!inner(specialty_id, specialties(name, slug))")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .gte("reviewed_at", daysAgo(180));
 
   if (!reviews || reviews.length === 0) return [];
 

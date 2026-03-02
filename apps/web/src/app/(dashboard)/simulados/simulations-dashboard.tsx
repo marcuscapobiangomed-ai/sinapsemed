@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,9 +65,6 @@ export function SimulationsDashboard({
     gaps: { specialty_name: string; specialty_slug: string; combined_accuracy: number; advice: string }[];
     overallAccuracy: number;
   } | null>(null);
-  const [, startTransition] = useTransition();
-  const router = useRouter();
-
   async function handleAdd(data: SimulationFormData) {
     const supabase = createClient();
 
@@ -117,11 +113,6 @@ export function SimulationsDashboard({
       );
     }
 
-    // Refresh data
-    startTransition(() => {
-      router.refresh();
-    });
-
     // Optimistic: add to local list
     const accuracy = data.total_questions > 0
       ? Math.round((data.correct_answers / data.total_questions) * 100)
@@ -166,10 +157,6 @@ export function SimulationsDashboard({
     await supabase.from("simulations").delete().eq("id", id);
 
     setSimulations((prev) => prev.filter((s) => s.id !== id));
-
-    startTransition(() => {
-      router.refresh();
-    });
   }
 
   async function handleEditOpen(sim: Simulation) {
@@ -290,9 +277,6 @@ export function SimulationsDashboard({
     );
 
     setEditingSimulation(null);
-    startTransition(() => {
-      router.refresh();
-    });
   }
 
   return (

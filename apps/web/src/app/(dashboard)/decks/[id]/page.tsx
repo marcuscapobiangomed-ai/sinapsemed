@@ -3,12 +3,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { getPlanLimits, getUsageCount, checkFlashcardLimit } from "@/lib/plan-limits";
-import { CreateFlashcardDialog } from "./create-flashcard-dialog";
-import { FlashcardItem } from "./flashcard-item";
+import { DeckDetailClient } from "./deck-detail-client";
 
 export async function generateMetadata({
   params,
@@ -78,36 +76,17 @@ export default async function DeckDetailPage({
             <p className="text-muted-foreground ml-14">{deck.description}</p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary">
-            {deck.card_count} {deck.card_count === 1 ? "card" : "cards"}
-          </Badge>
-          <CreateFlashcardDialog
-            deckId={deck.id}
-            limitReached={!fcLimit.allowed}
-            limitInfo={fcLimit.limit !== null ? `${fcLimit.current}/${fcLimit.limit} este mês (${fcLimit.plan_name})` : undefined}
-          />
-        </div>
+        <Badge variant="secondary">
+          {deck.card_count} {deck.card_count === 1 ? "card" : "cards"}
+        </Badge>
       </div>
 
-      {/* Flashcards list */}
-      {!flashcards || flashcards.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <BookOpen className="h-12 w-12 text-muted-foreground/50" />
-            <p className="mt-4 text-lg font-medium">Nenhum flashcard</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Adicione flashcards a este deck para começar a estudar
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {flashcards.map((card) => (
-            <FlashcardItem key={card.id} flashcard={card} />
-          ))}
-        </div>
-      )}
+      <DeckDetailClient
+        deckId={deck.id}
+        initialFlashcards={flashcards ?? []}
+        limitReached={!fcLimit.allowed}
+        limitInfo={fcLimit.limit !== null ? `${fcLimit.current}/${fcLimit.limit} este mês (${fcLimit.plan_name})` : undefined}
+      />
     </div>
   );
 }

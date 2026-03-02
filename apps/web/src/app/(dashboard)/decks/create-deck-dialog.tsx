@@ -36,12 +36,12 @@ export function CreateDeckDialog() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    const { error } = await supabase.from("decks").insert({
+    const { data: deck, error } = await supabase.from("decks").insert({
       user_id: user!.id,
       title: formData.get("title") as string,
       description: (formData.get("description") as string) || null,
       color,
-    });
+    }).select("id").single();
 
     if (error) {
       toast.error("Erro ao criar deck", { description: error.message });
@@ -52,7 +52,7 @@ export function CreateDeckDialog() {
     toast.success("Deck criado!");
     setOpen(false);
     setIsLoading(false);
-    router.refresh();
+    if (deck) router.push(`/decks/${deck.id}`);
   }
 
   return (

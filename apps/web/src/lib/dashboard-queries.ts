@@ -54,7 +54,7 @@ export async function getStreak(
     .from("reviews")
     .select("reviewed_at")
     .eq("user_id", userId)
-    .gte("reviewed_at", daysAgo(365))
+    .gte("reviewed_at", daysAgo(90))
     .order("reviewed_at", { ascending: false });
 
   if (!reviews || reviews.length === 0) return 0;
@@ -68,7 +68,7 @@ export async function getStreak(
   let streak = 0;
   const today = new Date();
 
-  for (let i = 0; i < 365; i++) {
+  for (let i = 0; i < 90; i++) {
     const checkDate = new Date(today);
     checkDate.setDate(today.getDate() - i);
     const dateStr = toDateString(checkDate);
@@ -207,11 +207,12 @@ export async function getDeckPerformance(
 
   if (!decks || decks.length === 0) return [];
 
-  // Fetch all reviews with their flashcard's deck_id
+  // Fetch recent reviews with their flashcard's deck_id
   const { data: reviews } = await supabase
     .from("reviews")
     .select("rating, flashcard_id, flashcards!inner(deck_id)")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .gte("reviewed_at", daysAgo(90));
 
   if (!reviews || reviews.length === 0) return [];
 

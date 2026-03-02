@@ -54,7 +54,7 @@ const DURATION_OPTIONS = [
   { value: "120", label: "120 dias" },
 ];
 
-export function CreateSprintDialog({ userId }: CreateSprintDialogProps) {
+export function CreateSprintDialog({ userId: _userId }: CreateSprintDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,7 +80,7 @@ export function CreateSprintDialog({ userId }: CreateSprintDialogProps) {
 
       toast.success("Sprint criado com sucesso!");
       setOpen(false);
-      router.refresh();
+      router.push("/sprints");
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Erro ao criar sprint",

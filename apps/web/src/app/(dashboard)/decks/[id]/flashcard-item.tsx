@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,10 +17,11 @@ import type { Flashcard } from "@dindin/shared";
 
 interface FlashcardItemProps {
   flashcard: Flashcard;
+  onDelete?: (cardId: string) => void;
+  onToggleSuspend?: (cardId: string) => void;
 }
 
-export function FlashcardItem({ flashcard }: FlashcardItemProps) {
-  const router = useRouter();
+export function FlashcardItem({ flashcard, onDelete, onToggleSuspend }: FlashcardItemProps) {
   const [showBack, setShowBack] = useState(false);
 
   async function handleDelete() {
@@ -37,7 +37,7 @@ export function FlashcardItem({ flashcard }: FlashcardItemProps) {
     }
 
     toast.success("Flashcard deletado");
-    router.refresh();
+    onDelete?.(flashcard.id);
   }
 
   async function handleToggleSuspend() {
@@ -53,7 +53,7 @@ export function FlashcardItem({ flashcard }: FlashcardItemProps) {
     }
 
     toast.success(flashcard.is_suspended ? "Card reativado" : "Card pausado");
-    router.refresh();
+    onToggleSuspend?.(flashcard.id);
   }
 
   return (
