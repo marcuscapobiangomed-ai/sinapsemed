@@ -50,6 +50,16 @@ export function OnboardingTour({ userId, showTour }: OnboardingTourProps) {
             },
           },
           {
+            element: "[data-tour='sidebar-duvidas']",
+            popover: {
+              title: "Tira-Duvidas com IA",
+              description:
+                "Pergunte qualquer duvida medica. O mentor adapta a resposta para suas bancas e sugere flashcards.",
+              side: "right",
+              align: "start",
+            },
+          },
+          {
             element: "[data-tour='sidebar-review']",
             popover: {
               title: "Revisao Inteligente",

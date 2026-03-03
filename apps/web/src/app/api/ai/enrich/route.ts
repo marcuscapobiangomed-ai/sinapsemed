@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getGroq, GROQ_MODEL } from "@/lib/ai";
+import { getGroq, GROQ_MODEL, BANCA_DISPLAY_NAMES } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -32,20 +32,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Texto do flashcard muito longo" }, { status: 400 });
   }
 
-  // Buscar banca primária do usuário
-  const { data: userBanca } = await supabase
+  // Buscar todas as bancas do usuário
+  const { data: userBancas } = await supabase
     .from("user_bancas")
     .select("bancas(slug)")
-    .eq("user_id", user.id)
-    .eq("is_primary", true)
-    .single();
+    .eq("user_id", user.id);
 
-  const bancaSlug =
-    (userBanca?.bancas as unknown as { slug: string } | null)?.slug ?? "enare";
+  const bancaSlugs = (userBancas ?? [])
+    .map((ub) => (ub.bancas as unknown as { slug: string } | null)?.slug)
+    .filter((s): s is string => !!s);
+
+  const bancaNames = bancaSlugs
+    .map((slug) => BANCA_DISPLAY_NAMES[slug] ?? slug.toUpperCase())
+    .join(", ") || "ENARE";
 
   const prompt = `Você é um especialista em criação de flashcards médicos para a prova de residência.
 
-Contexto da banca: ${bancaSlug.toUpperCase()}
+Bancas do estudante: ${bancaNames}
 
 Analise este flashcard e retorne uma versão melhorada seguindo a regra da "informação mínima" (resposta em menos de 8 segundos).
 
@@ -117,6 +120,6 @@ Responda APENAS com JSON válido no formato:
   return NextResponse.json({
     success: true,
     enriched,
-    banca: bancaSlug,
+    bancas: bancaSlugs,
   });
 }

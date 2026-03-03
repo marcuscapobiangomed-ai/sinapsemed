@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getGroq, GROQ_MODEL } from "@/lib/ai";
+import { getGroq, GROQ_MODEL, BANCA_DISPLAY_NAMES } from "@/lib/ai";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -29,6 +29,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Fetch user's bancas for contextualized generation
+  const { data: userBancas } = await supabase
+    .from("user_bancas")
+    .select("bancas(slug)")
+    .eq("user_id", user.id);
+
+  const bancaNames = (userBancas ?? [])
+    .map((ub) => {
+      const slug = (ub.bancas as unknown as { slug: string } | null)?.slug;
+      return slug ? (BANCA_DISPLAY_NAMES[slug] ?? slug.toUpperCase()) : null;
+    })
+    .filter((s): s is string => !!s);
+
   const { topic, count = 5 } = await req.json();
   if (!topic || typeof topic !== "string" || topic.trim().length < 3) {
     return NextResponse.json(
@@ -56,16 +69,17 @@ export async function POST(req: NextRequest) {
       {
         role: "system",
         content: `Você é um especialista em criar flashcards médicos para residência. Gere exatamente ${cardCount} flashcards sobre o tema fornecido.
-
+${bancaNames.length > 0 ? `\nBancas do estudante: ${bancaNames.join(", ")}.\nPriorize temas frequentes nessas bancas.\n` : ""}
 Regras:
 - front: pergunta direta ou frase cloze, máximo 20 palavras
 - back: resposta essencial, máximo 15 palavras
 - type: "qa" ou "cloze"
+- banca: array com bancas do estudante onde este tema é frequentemente cobrado. Máx 2. Pode ser [].
 - Conteúdo baseado em diretrizes brasileiras quando aplicável
 - Foco em conceitos cobrados em provas de residência
 
 Responda APENAS com JSON válido, sem markdown:
-{"flashcards":[{"type":"qa","front":"...","back":"..."}]}`,
+{"flashcards":[{"type":"qa","front":"...","back":"...","banca":[]}]}`,
       },
       {
         role: "user",
@@ -83,10 +97,11 @@ Responda APENAS com JSON válido, sem markdown:
     }
 
     const flashcards = parsed.flashcards.slice(0, cardCount).map(
-      (fc: { type?: string; front?: string; back?: string }) => ({
+      (fc: { type?: string; front?: string; back?: string; banca?: string[] }) => ({
         type: fc.type === "cloze" ? "cloze" : "qa",
         front: String(fc.front ?? "").slice(0, 200),
         back: String(fc.back ?? "").slice(0, 200),
+        banca: Array.isArray(fc.banca) ? fc.banca.slice(0, 2) : [],
       }),
     );
 

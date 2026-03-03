@@ -8,20 +8,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getActiveSprint } from "@/lib/sprint-queries";
 import { get8020Queue } from "@/lib/sprint-80-20";
+import { BANCA_DISPLAY_NAMES } from "@/lib/ai";
 
 export const metadata: Metadata = {
   title: "Revisão",
-};
-
-const BANCA_DISPLAY_NAMES: Record<string, string> = {
-  enare: "ENARE",
-  enamed: "ENAMED",
-  usp: "USP-SP",
-  unicamp: "UNICAMP",
-  "ses-df": "SES-DF",
-  "sus-sp": "SUS-SP",
-  famerp: "FAMERP",
-  "santa-casa": "Santa Casa SP",
 };
 
 export default async function ReviewPage({

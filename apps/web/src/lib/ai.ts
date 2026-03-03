@@ -27,7 +27,7 @@ export function getOpenAIClient(): OpenAI {
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 
 // ── Slug → Display Name ──
-const BANCA_DISPLAY_NAMES: Record<string, string> = {
+export const BANCA_DISPLAY_NAMES: Record<string, string> = {
   enare: "ENARE",
   enamed: "ENAMED",
   usp: "USP-SP",

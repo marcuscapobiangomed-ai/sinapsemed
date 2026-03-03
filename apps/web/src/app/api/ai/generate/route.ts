@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { getGroq, GROQ_MODEL } from "@/lib/ai";
+import { getGroq, GROQ_MODEL, BANCA_DISPLAY_NAMES } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 20;
@@ -13,18 +13,6 @@ const CORS_HEADERS = corsHeaders();
 export async function OPTIONS() {
   return corsOptions();
 }
-
-/** Extract all banca display names for a user */
-const BANCA_DISPLAY_NAMES: Record<string, string> = {
-  enare: "ENARE",
-  enamed: "ENAMED",
-  usp: "USP-SP",
-  unicamp: "UNICAMP",
-  "ses-df": "SES-DF",
-  "sus-sp": "SUS-SP",
-  famerp: "FAMERP",
-  "santa-casa": "Santa Casa SP",
-};
 
 function extractBancaNames(
   userBancas: { bancas: unknown }[] | null,
