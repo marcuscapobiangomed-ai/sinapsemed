@@ -5,6 +5,42 @@ SaaS de educação médica para preparação de residência (ENARE, ENAMED, USP)
 Monorepo Turborepo + pnpm. Stack: Next.js 15, Supabase, shadcn/ui, Tailwind v4, ts-fsrs.
 UI em Português (BR). Dev solo com agentes AI.
 
+---
+
+## Metodologia de Trabalho (OBRIGATÓRIO)
+
+**Antes de escrever qualquer linha de código**, seguir este processo sem exceção:
+
+### Passo 1 — Estruturar o Plano de Ação
+1. Ler todos os arquivos relevantes para a tarefa (pages, queries, migrations, types)
+2. Identificar o estado atual vs. o estado desejado
+3. Mapear dependências técnicas (ex: migration antes de UI, types antes de queries)
+4. Identificar riscos e decisões necessárias — **se houver decisão de produto/arquitetura, perguntar antes de codar**
+5. Escrever o plano em `task_plan.md` na raiz
+
+### Passo 2 — Dividir em Fases
+- Cada fase deve ser **independente e entregável** — build passa ao final de cada fase
+- Ordem obrigatória dentro de cada fase: `schema (migration) → types → queries/lib → API routes → UI`
+- **Nunca misturar** mudança de schema com mudança de UI na mesma fase
+- Fase com risco alto de breaking change: avisar o usuário antes de executar
+- Nomear cada fase claramente (ex: "Fase 1: Migration + Types", "Fase 2: API", "Fase 3: UI")
+
+### Passo 3 — Microtasks por Fase
+- Cada microtask = **1 arquivo ou 1 mudança atômica** (ex: "criar migration X", "atualizar type Y", "criar componente Z")
+- Usar TodoWrite para rastrear progresso em tempo real
+- Marcar cada microtask como concluída **imediatamente** após terminar
+- Nunca passar para a próxima microtask sem a atual estar passando no TypeScript
+- Ao final de cada fase: rodar `npx turbo build --filter=@dindin/web` para validar
+
+### Regras de Ouro
+- **Ler antes de escrever** — nunca editar arquivo sem tê-lo lido
+- **Build must pass** — cada commit entregável deve compilar sem erros
+- **Uma fase por vez** — não iniciar Fase 2 sem Fase 1 completa e buildando
+- **Consultar ROADMAP.md** — todas as features devem estar alinhadas com o roadmap do produto
+- **Schema é irreversível em produção** — migrations precisam de atenção redobrada
+
+---
+
 ## Comandos
 - `pnpm dev:web` — dev server
 - `npx turbo build --filter=@dindin/web` — build produção
